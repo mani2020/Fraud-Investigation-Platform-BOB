@@ -1,0 +1,138 @@
+spring:
+  application:
+    name: fraud-investigation-platform
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/frauddb
+    username: fraud
+    password: fraud123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: fraud-platform-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        "spring.json.trusted.packages": "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    listener:
+      ack-mode: manual
+  
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=1h
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    com.fraud.platform: INFO
+    com.fraud.platform.controller: INFO
+    com.fraud.platform.orchestrator: INFO
+    com.fraud.platform.agents: INFO
+    com.fraud.platform.service: INFO
+    com.fraud.platform.kafka: INFO
+    org.springframework: INFO
+    org.springframework.web: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN
+    org.hibernate: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/fraud-platform.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 1GB
+
+# Fraud Detection Configuration
+fraud:
+  thresholds:
+    high-value: 100000
+    suspicious-value: 50000
+    history-days: 30
+    velocity-count: 5
+    velocity-minutes: 10
+    burst-count: 3
+    burst-minutes: 5
+    daily-amount: 500000
+  
+  agents:
+    rule-based:
+      enabled: true
+      high-amount-threshold: 10000
+      medium-amount-threshold: 5000
+    ml-scoring:
+      enabled: true
+      model-path: classpath:models/fraud-model.pkl
+    velocity:
+      enabled: true
+      max-transactions-per-hour: 10
+      max-transactions-per-day: 50
+    geo-location:
+      enabled: true
+      impossible-travel-speed-kmh: 800
+    behavior:
+      enabled: true
+      deviation-threshold: 3.0
+  
+  decision:
+    auto-approve-threshold: 30
+    review-threshold: 70
+    block-threshold: 90
+  
+  orchestrator:
+    timeout-seconds: 5
+    parallel-execution: true
+
+# Kafka Topics
+kafka:
+  topics:
+    fraud-transactions: fraud-transactions
+    fraud-results: fraud-results
+    fraud-alerts: fraud-alerts
+    partitions: 3
+    replication-factor: 1
