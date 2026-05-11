@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Flow Diagram</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .instructions {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .mermaid {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fraud Detection Flow - End-to-End Technical Flow</h1>
+        
+        <div class="instructions">
+            <h3>Instructions to Generate PNG:</h3>
+            <ol>
+                <li>Open this HTML file in a web browser</li>
+                <li>Right-click on the diagram and select "Save image as..."</li>
+                <li>Save as <code>fraud-flow-diagram.png</code> in the same directory</li>
+            </ol>
+            <p><strong>Alternative:</strong> Use an online Mermaid editor like <a href="https://mermaid.live" target="_blank">mermaid.live</a> and paste the content from <code>fraud-flow-diagram.mmd</code></p>
+        </div>
+
+        <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as Client Application
+    participant API as TransactionController<br/>(REST API)
+    participant Service as TransactionService
+    participant DB as PostgreSQL<br/>(transactions table)
+    participant Producer as KafkaProducerService
+    participant Kafka as Kafka Topic<br/>"fraud-transactions"
+    participant Consumer as KafkaConsumerService
+    participant Orchestrator as FraudOrchestratorService
+    participant Agents as 5 Fraud Agents<br/>(Parallel Execution)
+    participant Decision as DecisionService
+    participant Explain as ExplainabilityService
+
+    rect rgb(240, 248, 255)
+        Note over Client,DB: Synchronous Flow (< 100ms)
+        Client->>API: POST /api/transactions<br/>{txnId, amount, merchant, etc}
+        API->>Service: createTransaction(request)
+        Service->>DB: INSERT Transaction<br/>status=PENDING
+        DB-->>Service: Transaction saved (id, txnId)
+        Service->>Producer: publishTransactionEvent(event)
+        Producer->>Kafka: Publish to "fraud-transactions"<br/>Key: txnId, Value: TransactionEvent
+        Kafka-->>Producer: Ack (partition, offset)
+        Service-->>API: Return Transaction
+        API-->>Client: 201 Created<br/>{id, txnId, status=PENDING}
+    end
+
+    rect rgb(255, 250, 240)
+        Note over Kafka,Explain: Asynchronous Flow (200-500ms)
+        Kafka->>Consumer: Consume from "fraud-transactions"<br/>(Consumer Group)
+        Consumer->>Orchestrator: analyzeTransaction(event)
+        
+        par Parallel Agent Execution (5 threads)
+            Orchestrator->>Agents: RiskAgent.analyze()<br/>Weight: 0.25
+            Orchestrator->>Agents: GeoAgent.analyze()<br/>Weight: 0.20
+            Orchestrator->>Agents: DeviceAgent.analyze()<br/>Weight: 0.20
+            Orchestrator->>Agents: AMLAgent.analyze()<br/>Weight: 0.20
+            Orchestrator->>Agents: BehaviorAgent.analyze()<br/>Weight: 0.15
+        end
+        
+        Agents-->>Orchestrator: 5 AgentResults<br/>(score, decision, reasons)
+        
+        Orchestrator->>Orchestrator: aggregateResults()<br/>Weighted Score Calculation
+        Orchestrator->>Decision: makeDecision(fraudDecision)
+        Decision-->>Orchestrator: Final Decision<br/>(APPROVE/REVIEW/REJECT)
+        Orchestrator->>Explain: generateExplanation(fraudDecision)
+        Explain-->>Orchestrator: Human-readable explanation
+        Orchestrator->>Service: updateFraudDecision(txnId, decision, score)
+        Service->>DB: UPDATE Transaction<br/>fraudDecision, fraudScore<br/>status=PROCESSED
+        DB-->>Service: Updated
+        Orchestrator-->>Consumer: FraudDecision
+        Consumer->>Kafka: Acknowledge message
+    end
+
+    rect rgb(240, 255, 240)
+        Note over Client,DB: Query Final Result
+        Client->>API: GET /api/transactions/{txnId}
+        API->>Service: findByTxnId(txnId)
+        Service->>DB: SELECT Transaction
+        DB-->>Service: Transaction with fraud decision
+        Service-->>API: Transaction
+        API-->>Client: 200 OK<br/>{status=PROCESSED, fraudDecision, fraudScore}
+    end
+        </div>
+    </div>
+</body>
+</html>

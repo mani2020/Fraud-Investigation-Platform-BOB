@@ -29,6 +29,8 @@ Step-by-step guides for setup, testing, and operations.
 ### 🔧 Technical (`technical/`)
 Technical specifications, schemas, and sample outputs.
 
+- **[FRAUD_FLOW_TECHNICAL.md](technical/FRAUD_FLOW_TECHNICAL.md)** - Complete end-to-end transaction flow explanation
+- **[fraud-flow-diagram.html](technical/fraud-flow-diagram.html)** - Interactive visual flow diagram
 - **[DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)** - Complete database design and queries
 - **[DECISION_SERVICE_SAMPLE_OUTPUT.md](technical/DECISION_SERVICE_SAMPLE_OUTPUT.md)** - Fraud decision examples
 - **[EXPLAINABILITY_SAMPLE_OUTPUT.md](technical/EXPLAINABILITY_SAMPLE_OUTPUT.md)** - AI explanation examples
@@ -47,13 +49,15 @@ Development history, planning, and code review results.
 New to the project? Start here:
 
 1. **[SETUP_TESTING.md](guides/SETUP_TESTING.md)** - Get the application running
-2. **[HACKATHON_ARCHITECTURE.md](architecture/HACKATHON_ARCHITECTURE.md)** - Understand the system design
-3. **[DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)** - Learn the data model
+2. **[FRAUD_FLOW_TECHNICAL.md](technical/FRAUD_FLOW_TECHNICAL.md)** - Understand the transaction flow
+3. **[HACKATHON_ARCHITECTURE.md](architecture/HACKATHON_ARCHITECTURE.md)** - Understand the system design
+4. **[DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)** - Learn the data model
 
 ## 🔍 Finding Documentation
 
 ### By Task
 - **Setting up the project** → [SETUP_TESTING.md](guides/SETUP_TESTING.md)
+- **Understanding transaction flow** → [FRAUD_FLOW_TECHNICAL.md](technical/FRAUD_FLOW_TECHNICAL.md)
 - **Understanding architecture** → [HACKATHON_ARCHITECTURE.md](architecture/HACKATHON_ARCHITECTURE.md)
 - **Viewing logs** → [LOGGING_GUIDE.md](guides/LOGGING_GUIDE.md)
 - **Database queries** → [DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)

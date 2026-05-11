@@ -50,8 +50,20 @@ com.fraud.platform/
 └── util/            # Utility classes
 ```
 
-### Event Flow
-refer attached img which is fraud-flow-diagram
+### Transaction Flow
+
+For a detailed technical explanation of the high-risk transaction flow, see:
+- **[Fraud Flow Technical Documentation](docs/technical/FRAUD_FLOW_TECHNICAL.md)** - Complete end-to-end flow explanation
+- **[Fraud Flow Diagram](docs/technical/fraud-flow-diagram.html)** - Interactive visual diagram
+
+**Quick Overview:**
+1. **API Entry** → Transaction submitted via REST API
+2. **Database Storage** → Saved to PostgreSQL (status=PENDING)
+3. **Kafka Publishing** → Event published to `fraud-transactions` topic
+4. **Async Processing** → Consumer picks up event
+5. **Agent Analysis** → 5 agents analyze in parallel (Risk, Geo, Device, AML, Behavior)
+6. **Decision Making** → Weighted scoring and final decision (APPROVE/REVIEW/REJECT)
+7. **Final Storage** → Transaction updated with fraud decision (status=PROCESSED)
 
 ## Quick Start
 
@@ -362,6 +374,8 @@ netstat -ano | findstr :8080
 - [Logging Guide](docs/guides/LOGGING_GUIDE.md) - End-to-end request tracking and monitoring
 
 ### Technical Documentation
+- [Fraud Flow Technical](docs/technical/FRAUD_FLOW_TECHNICAL.md) - Complete end-to-end transaction flow
+- [Fraud Flow Diagram](docs/technical/fraud-flow-diagram.html) - Interactive visual diagram
 - [Database Schema](docs/technical/DATABASE_SCHEMA.md) - Complete database design
 - [Decision Service Output](docs/technical/DECISION_SERVICE_SAMPLE_OUTPUT.md) - Fraud decision examples
 - [Explainability Output](docs/technical/EXPLAINABILITY_SAMPLE_OUTPUT.md) - AI explanation examples
