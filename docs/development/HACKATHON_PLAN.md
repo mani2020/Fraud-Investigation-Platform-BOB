@@ -329,7 +329,7 @@ npm run dev
 
 ### Access
 - Backend API: http://localhost:8080
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5174
 - Kafka UI: http://localhost:9000 (if added)
 - PostgreSQL: localhost:5432
 

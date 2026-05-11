@@ -1,0 +1,90 @@
+// ============================================
+// RESPONSIVE BREAKPOINTS SYSTEM
+// Fraud Investigation Platform
+// ============================================
+
+// Breakpoint Values (Aligned with _variables.scss)
+$breakpoint-mobile: 768px;   // Mobile: < 768px
+$breakpoint-tablet: 1024px;  // Tablet: 768px - 1023px
+$breakpoint-desktop: 1024px; // Desktop: >= 1024px
+$breakpoint-wide: 1920px;    // Wide: >= 1920px
+
+// Mobile-First Responsive Mixins
+// Usage: @include mobile { ... }
+
+// Mobile: < 768px (phones)
+@mixin mobile {
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    @content;
+  }
+}
+
+// Tablet: 768px - 1023px (tablets)
+@mixin tablet {
+  @media (min-width: $breakpoint-mobile) and (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+// Tablet and up: >= 768px
+@mixin tablet-up {
+  @media (min-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+// Desktop: >= 1024px (desktops)
+@mixin desktop {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+// Desktop and up: >= 1024px
+@mixin desktop-up {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+// Wide screens: >= 1920px
+@mixin wide {
+  @media (min-width: $breakpoint-wide) {
+    @content;
+  }
+}
+
+// Custom breakpoint mixin
+@mixin respond-to($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// Orientation mixins
+@mixin landscape {
+  @media (orientation: landscape) {
+    @content;
+  }
+}
+
+@mixin portrait {
+  @media (orientation: portrait) {
+    @content;
+  }
+}
+
+// Touch device detection
+@mixin touch-device {
+  @media (hover: none) and (pointer: coarse) {
+    @content;
+  }
+}
+
+@mixin hover-device {
+  @media (hover: hover) and (pointer: fine) {
+    @content;
+  }
+}
+
+// Made with Bob

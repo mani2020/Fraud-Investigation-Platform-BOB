@@ -13,6 +13,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+      connection-init-sql: SET TIME ZONE 'UTC'
   
   jpa:
     hibernate:

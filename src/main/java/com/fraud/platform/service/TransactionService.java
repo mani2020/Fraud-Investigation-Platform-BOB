@@ -1,8 +1,10 @@
 package com.fraud.platform.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fraud.platform.entity.Transaction;
 import com.fraud.platform.kafka.KafkaProducerService;
 import com.fraud.platform.kafka.events.TransactionEvent;
+import com.fraud.platform.model.AgentResult;
 import com.fraud.platform.model.TransactionRequest;
 import com.fraud.platform.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final KafkaProducerService kafkaProducerService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Create a new transaction from request.
@@ -123,6 +126,36 @@ public class TransactionService {
         transaction.setFraudDecision(decision);
         transaction.setFraudScore(score);
         transaction.setStatus("PROCESSED");
+        
+        return transactionRepository.save(transaction);
+    }
+
+    /**
+     * Update fraud decision with agent results and risk factors.
+     */
+    @Transactional
+    public Transaction updateFraudDecisionWithDetails(String txnId, String decision, java.math.BigDecimal score,
+                                                      List<AgentResult> agentResults, List<String> riskFactors) {
+        log.info("Updating fraud decision with details: txnId={}, decision={}, score={}", txnId, decision, score);
+        
+        Transaction transaction = transactionRepository.findByTxnId(txnId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + txnId));
+        
+        transaction.setFraudDecision(decision);
+        transaction.setFraudScore(score);
+        transaction.setStatus("PROCESSED");
+        
+        // Serialize agent results and risk factors to JSON
+        try {
+            if (agentResults != null && !agentResults.isEmpty()) {
+                transaction.setAgentResultsJson(objectMapper.writeValueAsString(agentResults));
+            }
+            if (riskFactors != null && !riskFactors.isEmpty()) {
+                transaction.setRiskFactorsJson(objectMapper.writeValueAsString(riskFactors));
+            }
+        } catch (Exception e) {
+            log.error("Error serializing fraud details for transaction: {}", txnId, e);
+        }
         
         return transactionRepository.save(transaction);
     }

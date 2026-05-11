@@ -1,0 +1,379 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// NAVBAR
+// Fixed top navigation bar with glassmorphism
+// ============================================
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: $navbar-height;
+  z-index: $z-navbar;
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border-bottom: 1px solid $border-primary;
+  box-shadow: $shadow-md;
+  transition: all $transition-base;
+
+  @include mobile {
+    height: $navbar-height-mobile;
+  }
+
+  // ============================================
+  // CONTAINER
+  // ============================================
+
+  &__container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 $spacing-md;
+    gap: $spacing-md;
+
+    @include mobile {
+      padding: 0 $spacing-sm;
+      gap: $spacing-sm;
+    }
+  }
+
+  // ============================================
+  // MENU BUTTON
+  // ============================================
+
+  &__menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: $text-primary;
+    cursor: pointer;
+    border-radius: $radius-md;
+    transition: all $transition-fast;
+
+    @include mobile {
+      width: 36px;
+      height: 36px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: $accent-primary;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+
+      @include mobile {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  // ============================================
+  // BRAND
+  // ============================================
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    text-decoration: none;
+    color: $text-primary;
+    transition: opacity $transition-fast;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    svg {
+      width: 32px;
+      height: 32px;
+      filter: drop-shadow($glow-purple);
+
+      @include mobile {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+
+  &__title {
+    font-size: $text-lg;
+    font-weight: $font-semibold;
+    white-space: nowrap;
+    background: $gradient-accent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+
+    @include mobile {
+      font-size: $text-base;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // ============================================
+  // SEARCH
+  // ============================================
+
+  &__search {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 $spacing-lg;
+
+    @include tablet {
+      max-width: 300px;
+      margin: 0 $spacing-md;
+    }
+
+    // Override Carbon Search styles
+    .cds--search {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid $border-primary;
+      border-radius: $radius-lg;
+      position: relative;
+      cursor: text;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &:focus-within {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: $accent-primary;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      }
+    }
+
+    // Make the entire search container clickable
+    .cds--search-input-wrapper {
+      width: 100%;
+      cursor: text;
+    }
+
+    // Hide the label visually but keep it for accessibility
+    .cds--label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .cds--search-input {
+      color: $text-primary;
+      background: transparent;
+      cursor: text;
+      pointer-events: auto;
+      z-index: 1;
+      
+      &::placeholder {
+        color: $text-muted;
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .cds--search-magnifier-icon {
+      fill: $text-secondary;
+      pointer-events: none;
+    }
+
+    .cds--search-close {
+      pointer-events: auto;
+      z-index: 2;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Mobile search overlay
+  &__search-mobile {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: $spacing-md;
+    background: $glass-bg;
+    backdrop-filter: blur($glass-blur);
+    -webkit-backdrop-filter: blur($glass-blur);
+    border-bottom: 1px solid $border-primary;
+    box-shadow: $shadow-lg;
+    animation: slide-in-up 0.2s ease;
+
+    .cds--search {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid $border-primary;
+      border-radius: $radius-lg;
+    }
+  }
+
+  // ============================================
+  // ACTIONS
+  // ============================================
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-left: auto;
+  }
+
+  &__action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: $text-primary;
+    cursor: pointer;
+    border-radius: $radius-md;
+    transition: all $transition-fast;
+
+    @include mobile {
+      width: 36px;
+      height: 36px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: $accent-primary;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    // Notification badge
+    &--notification {
+      .navbar__badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $gradient-danger;
+        color: white;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        border-radius: $radius-full;
+        box-shadow: $glow-danger;
+        animation: pulse-glow 2s infinite;
+      }
+    }
+
+    // Profile action
+    &--profile {
+      &:hover {
+        background: $gradient-accent;
+        color: white;
+      }
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $gradient-danger;
+    color: white;
+    font-size: $text-xs;
+    font-weight: $font-bold;
+    border-radius: $radius-full;
+    box-shadow: $glow-danger;
+  }
+
+  // ============================================
+  // CARBON OVERRIDES
+  // ============================================
+
+  // Override Carbon Header styles
+  &.cds--header {
+    background: transparent;
+    border-bottom: none;
+  }
+
+  .cds--header__name {
+    padding: 0;
+    margin: 0;
+  }
+
+  .cds--header__global {
+    padding: 0;
+  }
+
+  .cds--header__action {
+    background: transparent;
+    border: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+// Made with Bob

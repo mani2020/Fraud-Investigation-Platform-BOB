@@ -37,12 +37,15 @@ services:
       POSTGRES_DB: frauddb
       POSTGRES_USER: fraud
       POSTGRES_PASSWORD: fraud123
+      TZ: UTC
+      PGTZ: UTC
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - fraud-network
+    command: postgres -c timezone=UTC
 
 volumes:
   postgres_data:

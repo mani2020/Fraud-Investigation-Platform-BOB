@@ -31,6 +31,7 @@ Technical specifications, schemas, and sample outputs.
 
 - **[FRAUD_FLOW_TECHNICAL.md](technical/FRAUD_FLOW_TECHNICAL.md)** - Complete end-to-end transaction flow explanation
 - **[fraud-flow-diagram.html](technical/fraud-flow-diagram.html)** - Interactive visual flow diagram
+- **[FRAUD_NOTIFICATION_SERVICE.md](technical/FRAUD_NOTIFICATION_SERVICE.md)** - Alert system for dashboard and investigation
 - **[DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)** - Complete database design and queries
 - **[DECISION_SERVICE_SAMPLE_OUTPUT.md](technical/DECISION_SERVICE_SAMPLE_OUTPUT.md)** - Fraud decision examples
 - **[EXPLAINABILITY_SAMPLE_OUTPUT.md](technical/EXPLAINABILITY_SAMPLE_OUTPUT.md)** - AI explanation examples
@@ -43,6 +44,7 @@ Development history, planning, and code review results.
 - **[CODE_REVIEW_SUMMARY.md](development/CODE_REVIEW_SUMMARY.md)** - Quality assurance results
 - **[PROBLEMS_TAB_EXPLANATION.md](development/PROBLEMS_TAB_EXPLANATION.md)** - Common issues and solutions
 - **[PROMPTS.md](development/PROMPTS.md)** - All Bob prompts used to build this platform
+- **[FRAUD_ALERTS_PAGINATION_FIX.md](development/FRAUD_ALERTS_PAGINATION_FIX.md)** - Pagination and UI improvements (2026-05-11)
 
 ## 🚀 Quick Start
 
@@ -58,10 +60,12 @@ New to the project? Start here:
 ### By Task
 - **Setting up the project** → [SETUP_TESTING.md](guides/SETUP_TESTING.md)
 - **Understanding transaction flow** → [FRAUD_FLOW_TECHNICAL.md](technical/FRAUD_FLOW_TECHNICAL.md)
+- **Working with fraud alerts** → [FRAUD_NOTIFICATION_SERVICE.md](technical/FRAUD_NOTIFICATION_SERVICE.md)
 - **Understanding architecture** → [HACKATHON_ARCHITECTURE.md](architecture/HACKATHON_ARCHITECTURE.md)
 - **Viewing logs** → [LOGGING_GUIDE.md](guides/LOGGING_GUIDE.md)
 - **Database queries** → [DATABASE_SCHEMA.md](technical/DATABASE_SCHEMA.md)
 - **Understanding fraud decisions** → [DECISION_SERVICE_SAMPLE_OUTPUT.md](technical/DECISION_SERVICE_SAMPLE_OUTPUT.md)
+- **Fixing pagination issues** → [FRAUD_ALERTS_PAGINATION_FIX.md](development/FRAUD_ALERTS_PAGINATION_FIX.md)
 
 ### By Role
 - **Developers** → Start with `guides/` and `technical/`

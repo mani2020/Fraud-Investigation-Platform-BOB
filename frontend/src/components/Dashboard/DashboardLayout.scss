@@ -1,0 +1,338 @@
+@import '../../styles/variables';
+
+.premium-dashboard-layout {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+// Premium Header Styling
+.premium-header {
+  @include glass-card;
+  border-bottom: 1px solid rgba($accent-cyan, 0.2);
+  backdrop-filter: blur(20px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8000;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: $gradient-primary;
+    opacity: 0.5;
+  }
+}
+
+// Premium Header Name
+.premium-header-name {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 0 $spacing-lg;
+  @include smooth-transition(all);
+  
+  &:hover {
+    .header-icon {
+      transform: rotate(360deg);
+      color: $accent-cyan;
+    }
+  }
+  
+  .header-icon {
+    @include smooth-transition(all);
+    color: $accent-purple;
+  }
+  
+  .header-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    
+    .header-title-main {
+      font-size: $text-lg;
+      font-weight: $font-bold;
+      @include text-gradient($gradient-primary);
+    }
+    
+    .header-title-sub {
+      font-size: $text-xs;
+      color: $text-secondary;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  }
+}
+
+// Premium Navigation
+.premium-nav {
+  .cds--header__menu-item {
+    @include smooth-transition(all);
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 80%;
+      height: 2px;
+      background: $gradient-primary;
+      @include smooth-transition(transform);
+    }
+    
+    &:hover {
+      background: rgba($accent-purple, 0.1);
+      
+      &::before {
+        transform: translateX(-50%) scaleX(1);
+      }
+      
+      .nav-icon {
+        color: $accent-cyan;
+        transform: translateY(-2px);
+      }
+    }
+    
+    &.active-nav-item {
+      background: rgba($accent-purple, 0.15);
+      border-bottom: 2px solid $accent-cyan;
+      
+      &::before {
+        transform: translateX(-50%) scaleX(1);
+      }
+      
+      .nav-icon {
+        color: $accent-cyan;
+      }
+    }
+  }
+  
+  .nav-icon {
+    margin-right: $spacing-xs;
+    @include smooth-transition(all);
+  }
+}
+
+// Premium Global Bar
+.premium-global-bar {
+  .global-action {
+    @include smooth-transition(all);
+    position: relative;
+    
+    &:hover {
+      background: rgba($accent-purple, 0.2);
+      transform: translateY(-2px);
+      box-shadow: $glow-purple;
+    }
+    
+    &.notification-action {
+      .notification-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 18px;
+        height: 18px;
+        background: $gradient-danger;
+        border-radius: $radius-full;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: $font-bold;
+        color: $text-primary;
+        animation: pulse-glow 2s ease-in-out infinite;
+        box-shadow: $glow-danger;
+      }
+    }
+    
+    &.user-action {
+      &:hover {
+        box-shadow: $glow-cyan;
+      }
+    }
+  }
+}
+
+// Premium Side Navigation
+.premium-sidenav {
+  @include glass-card;
+  border-right: 1px solid rgba($accent-cyan, 0.2);
+  
+  .cds--side-nav__link {
+    @include smooth-transition(all);
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%) scaleY(0);
+      width: 3px;
+      height: 70%;
+      background: $gradient-primary;
+      @include smooth-transition(transform);
+    }
+    
+    &:hover {
+      background: rgba($accent-purple, 0.1);
+      padding-left: $spacing-lg;
+      
+      &::before {
+        transform: translateY(-50%) scaleY(1);
+      }
+    }
+    
+    &.active-sidenav-item {
+      background: rgba($accent-purple, 0.15);
+      border-left: 3px solid $accent-cyan;
+      box-shadow: inset 0 0 20px rgba($accent-cyan, 0.1);
+      
+      &::before {
+        transform: translateY(-50%) scaleY(1);
+      }
+    }
+  }
+}
+
+// Premium Content Wrapper
+.premium-content-wrapper {
+  margin-top: 48px; // Header height
+  min-height: calc(100vh - 48px);
+  position: relative;
+  z-index: 1;
+}
+
+.premium-content-container {
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: $spacing-xl;
+  animation: fade-in 0.5s ease-out;
+  
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-lg;
+  }
+  
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-md;
+  }
+}
+
+// Animated Background Orbs
+.background-orbs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  
+  .orb {
+    position: absolute;
+    border-radius: $radius-full;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: float 20s ease-in-out infinite;
+    
+    &.orb-1 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, $accent-purple, transparent);
+      top: -250px;
+      left: -250px;
+      animation-delay: 0s;
+    }
+    
+    &.orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, $accent-cyan, transparent);
+      top: 50%;
+      right: -200px;
+      animation-delay: 7s;
+    }
+    
+    &.orb-3 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, $accent-blue, transparent);
+      bottom: -300px;
+      left: 50%;
+      animation-delay: 14s;
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+// Responsive Adjustments
+@media (max-width: $breakpoint-lg) {
+  .premium-header-name {
+    .header-title-main {
+      font-size: $text-base;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .premium-header-name {
+    .header-title-sub {
+      display: none;
+    }
+  }
+  
+  .background-orbs .orb {
+    &.orb-1 {
+      width: 300px;
+      height: 300px;
+    }
+    
+    &.orb-2 {
+      width: 250px;
+      height: 250px;
+    }
+    
+    &.orb-3 {
+      width: 350px;
+      height: 350px;
+    }
+  }
+}
+
+// Carbon Design System Overrides
+.cds--header {
+  background: transparent;
+}
+
+.cds--side-nav {
+  background: transparent;
+}
+
+.cds--header__menu-item:hover {
+  background-color: transparent;
+}
+
+.cds--side-nav__link:hover {
+  background-color: transparent;
+}
+
+// Made with Bob

@@ -1,0 +1,367 @@
+// Global Premium Futuristic Styles
+@import './variables';
+
+// ============================================
+// RESET & BASE STYLES
+// ============================================
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: $font-primary;
+  background: $bg-primary;
+  color: $text-primary;
+  line-height: $leading-normal;
+  overflow-x: hidden;
+  
+  // Subtle gradient overlay
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: $gradient-primary;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  // Noise texture (optional)
+  &::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+// ============================================
+// SCROLLBAR STYLING
+// ============================================
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $accent-primary;
+  border-radius: $radius-full;
+  
+  &:hover {
+    background: $accent-secondary;
+  }
+}
+
+// ============================================
+// TYPOGRAPHY
+// ============================================
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: $font-bold;
+  line-height: $leading-tight;
+  color: $text-primary;
+}
+
+h1 {
+  font-size: $text-4xl;
+  margin-bottom: $spacing-xl;
+  
+  @include text-gradient($gradient-accent);
+}
+
+h2 {
+  font-size: $text-3xl;
+  margin-bottom: $spacing-lg;
+}
+
+h3 {
+  font-size: $text-2xl;
+  margin-bottom: $spacing-md;
+}
+
+h4 {
+  font-size: $text-xl;
+  margin-bottom: $spacing-md;
+}
+
+p {
+  color: $text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+a {
+  color: $accent-cyan;
+  text-decoration: none;
+  @include smooth-transition(color);
+  
+  &:hover {
+    color: $accent-blue;
+  }
+}
+
+// ============================================
+// UTILITY CLASSES
+// ============================================
+
+.glass-card {
+  @include glass-card;
+  @include smooth-transition(all);
+  
+  &:hover {
+    @include glass-card-hover;
+  }
+}
+
+.gradient-border-top {
+  @include gradient-border($gradient-accent);
+}
+
+.text-gradient {
+  @include text-gradient($gradient-accent);
+}
+
+.neon-glow-purple {
+  @include neon-glow($neon-purple);
+}
+
+.neon-glow-cyan {
+  @include neon-glow($neon-cyan);
+}
+
+.neon-glow-danger {
+  @include neon-glow($status-danger);
+}
+
+// ============================================
+// ANIMATION CLASSES
+// ============================================
+
+.fade-in {
+  animation: fade-in $transition-base;
+}
+
+.slide-in-up {
+  animation: slide-in-up $transition-base;
+}
+
+.slide-in-right {
+  animation: slide-in-right $transition-base;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+// ============================================
+// CARBON DESIGN OVERRIDES
+// ============================================
+
+// Override Carbon's default theme
+.cds--content {
+  background: transparent;
+  padding: 0;
+}
+
+.cds--header {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  border-bottom: 1px solid $border-primary;
+  box-shadow: $shadow-md;
+}
+
+.cds--side-nav {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  border-right: 1px solid $border-primary;
+}
+
+.cds--data-table {
+  background: transparent;
+  
+  thead {
+    background: rgba($bg-tertiary, 0.5);
+    
+    th {
+      color: $text-primary;
+      font-weight: $font-semibold;
+      border-bottom: 2px solid $border-accent;
+    }
+  }
+  
+  tbody {
+    tr {
+      background: transparent;
+      border-bottom: 1px solid $border-primary;
+      @include smooth-transition(all);
+      
+      &:hover {
+        background: rgba($bg-card-hover, 0.5);
+        box-shadow: $glow-purple;
+      }
+      
+      td {
+        color: $text-secondary;
+      }
+    }
+  }
+}
+
+.cds--btn {
+  @include smooth-transition(all);
+  
+  &--primary {
+    background: $gradient-accent;
+    border: none;
+    
+    &:hover {
+      box-shadow: $glow-purple;
+      transform: translateY(-2px);
+    }
+  }
+  
+  &--secondary {
+    background: transparent;
+    border: 1px solid $border-accent;
+    color: $accent-primary;
+    
+    &:hover {
+      background: rgba($accent-primary, 0.1);
+      border-color: $accent-secondary;
+    }
+  }
+}
+
+.cds--tag {
+  @include smooth-transition(all);
+  border-radius: $radius-full;
+  font-weight: $font-medium;
+  
+  &--red {
+    background: rgba($status-danger, 0.2);
+    color: $status-danger;
+    border: 1px solid rgba($status-danger, 0.3);
+  }
+  
+  &--green {
+    background: rgba($status-success, 0.2);
+    color: $status-success;
+    border: 1px solid rgba($status-success, 0.3);
+  }
+  
+  &--yellow {
+    background: rgba($status-warning, 0.2);
+    color: $status-warning;
+    border: 1px solid rgba($status-warning, 0.3);
+  }
+  
+  &--blue {
+    background: rgba($status-info, 0.2);
+    color: $status-info;
+    border: 1px solid rgba($status-info, 0.3);
+  }
+  
+  &--purple {
+    background: rgba($status-pending, 0.2);
+    color: $status-pending;
+    border: 1px solid rgba($status-pending, 0.3);
+  }
+}
+
+.cds--modal {
+  .cds--modal-container {
+    @include glass-card;
+    border: 1px solid $border-accent;
+  }
+  
+  .cds--modal-header {
+    background: transparent;
+    border-bottom: 1px solid $border-primary;
+  }
+  
+  .cds--modal-content {
+    background: transparent;
+    color: $text-secondary;
+  }
+}
+
+.cds--search-input {
+  background: rgba($bg-tertiary, 0.5);
+  border: 1px solid $border-primary;
+  color: $text-primary;
+  
+  &:focus {
+    border-color: $border-accent;
+    box-shadow: $glow-purple;
+  }
+}
+
+.cds--pagination {
+  background: transparent;
+  border-top: 1px solid $border-primary;
+  
+  button {
+    color: $text-secondary;
+    
+    &:hover {
+      background: rgba($accent-primary, 0.1);
+      color: $accent-primary;
+    }
+  }
+}
+
+// ============================================
+// RESPONSIVE UTILITIES
+// ============================================
+
+@media (max-width: $breakpoint-md) {
+  html {
+    font-size: 14px;
+  }
+  
+  h1 {
+    font-size: $text-3xl;
+  }
+  
+  h2 {
+    font-size: $text-2xl;
+  }
+  
+  h3 {
+    font-size: $text-xl;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  html {
+    font-size: 13px;
+  }
+}
+
+// Made with Bob

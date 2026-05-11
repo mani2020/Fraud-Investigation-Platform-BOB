@@ -1,0 +1,198 @@
+@import '../styles/variables';
+@import '../styles/breakpoints';
+
+// ============================================
+// APP LAYOUT
+// Main application layout structure
+// ============================================
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $bg-primary;
+  position: relative;
+  overflow-x: hidden;
+
+  // ============================================
+  // CONTENT AREA
+  // ============================================
+  
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-top: $navbar-height;
+    margin-left: 0;
+    min-height: calc(100vh - #{$navbar-height});
+    transition: margin-left $transition-base;
+    position: relative;
+    z-index: $z-base;
+    overflow-x: hidden; // Prevent horizontal scroll
+
+    // Mobile: No sidebar margin
+    @include mobile {
+      margin-top: $navbar-height-mobile;
+      margin-left: 0;
+      min-height: calc(100vh - #{$navbar-height-mobile});
+    }
+
+    // Tablet: Always collapsed sidebar (64px)
+    @include tablet {
+      margin-top: $navbar-height;
+      margin-left: $sidebar-width-collapsed;
+      min-height: calc(100vh - #{$navbar-height});
+    }
+
+    // Desktop: Expanded sidebar by default (240px)
+    @include desktop {
+      margin-left: $sidebar-width-expanded;
+    }
+  }
+
+  &__content-inner {
+    flex: 1;
+    padding: $content-padding;
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+
+    @include mobile {
+      padding: $content-padding-mobile;
+    }
+
+    @include tablet {
+      padding: $content-padding-tablet;
+    }
+
+    @include desktop {
+      max-width: $content-max-width;
+    }
+  }
+
+  // ============================================
+  // SIDEBAR STATES
+  // ============================================
+
+  // Desktop sidebar collapsed state
+  &.sidebar-collapsed {
+    @include desktop {
+      .app-layout__content {
+        margin-left: $sidebar-width-collapsed;
+      }
+    }
+  }
+
+  // Desktop sidebar open state
+  &.sidebar-open {
+    @include desktop {
+      .app-layout__content {
+        margin-left: $sidebar-width-expanded;
+      }
+    }
+  }
+
+  // ============================================
+  // SMOOTH SCROLLING
+  // ============================================
+
+  .app-layout__content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: $radius-full;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  &.loading {
+    .app-layout__content {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  }
+
+  // ============================================
+  // PRINT STYLES
+  // ============================================
+
+  @media print {
+    .app-layout__content {
+      margin-left: 0;
+      margin-top: 0;
+    }
+  }
+}
+
+// ============================================
+// RESPONSIVE UTILITIES
+// ============================================
+
+// Hide on mobile
+.hide-mobile {
+  @include mobile {
+    display: none !important;
+  }
+}
+
+// Hide on tablet
+.hide-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+// Hide on desktop
+.hide-desktop {
+  @include desktop {
+    display: none !important;
+  }
+}
+
+// Show only on mobile
+.show-mobile {
+  display: none !important;
+
+  @include mobile {
+    display: block !important;
+  }
+}
+
+// Show only on tablet
+.show-tablet {
+  display: none !important;
+
+  @include tablet {
+    display: block !important;
+  }
+}
+
+// Show only on desktop
+.show-desktop {
+  display: none !important;
+
+  @include desktop {
+    display: block !important;
+  }
+}
+
+// Made with Bob

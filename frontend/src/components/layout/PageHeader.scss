@@ -1,0 +1,215 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// PAGE HEADER
+// Reusable page header with breadcrumbs
+// ============================================
+
+.page-header {
+  margin-bottom: $spacing-2xl;
+  animation: slide-in-up 0.3s ease;
+
+  @include mobile {
+    margin-bottom: $spacing-xl;
+  }
+
+  // ============================================
+  // BREADCRUMBS
+  // ============================================
+
+  &__breadcrumbs {
+    margin-bottom: $spacing-md;
+
+    @include mobile {
+      margin-bottom: $spacing-sm;
+    }
+
+    // Override Carbon breadcrumb styles
+    .cds--breadcrumb-item {
+      color: $text-muted;
+
+      &::after {
+        color: $text-muted;
+      }
+
+      a {
+        color: $text-secondary;
+        transition: color $transition-fast;
+
+        &:hover {
+          color: $accent-primary;
+        }
+      }
+
+      &--current {
+        color: $text-primary;
+      }
+    }
+  }
+
+  // ============================================
+  // CONTENT
+  // ============================================
+
+  &__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-lg;
+    flex-wrap: wrap;
+
+    @include mobile {
+      gap: $spacing-md;
+    }
+  }
+
+  // ============================================
+  // TITLE SECTION
+  // ============================================
+
+  &__title-section {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    flex: 1;
+    min-width: 0;
+
+    @include mobile {
+      gap: $spacing-sm;
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-lg;
+    background: $gradient-primary;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: $glow-purple;
+
+    @include mobile {
+      width: 40px;
+      height: 40px;
+    }
+
+    svg {
+      width: 32px;
+      height: 32px;
+
+      @include mobile {
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: $text-3xl;
+    font-weight: $font-bold;
+    color: $text-primary;
+    line-height: $leading-tight;
+    margin: 0;
+    background: $gradient-accent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+
+    @include mobile {
+      font-size: $text-2xl;
+    }
+  }
+
+  &__subtitle {
+    font-size: $text-base;
+    color: $text-secondary;
+    line-height: $leading-normal;
+    margin: $spacing-xs 0 0 0;
+
+    @include mobile {
+      font-size: $text-sm;
+    }
+  }
+
+  // ============================================
+  // ACTIONS
+  // ============================================
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    flex-shrink: 0;
+
+    @include mobile {
+      width: 100%;
+      justify-content: stretch;
+
+      > * {
+        flex: 1;
+      }
+    }
+
+    // Button spacing
+    button,
+    a {
+      white-space: nowrap;
+
+      @include mobile {
+        width: 100%;
+      }
+    }
+  }
+
+  // ============================================
+  // VARIANTS
+  // ============================================
+
+  &--compact {
+    margin-bottom: $spacing-lg;
+
+    .page-header__icon {
+      width: 40px;
+      height: 40px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .page-header__title {
+      font-size: $text-2xl;
+
+      @include mobile {
+        font-size: $text-xl;
+      }
+    }
+  }
+
+  &--centered {
+    .page-header__content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .page-header__title-section {
+      flex-direction: column;
+    }
+
+    .page-header__actions {
+      justify-content: center;
+    }
+  }
+}
+
+// Made with Bob

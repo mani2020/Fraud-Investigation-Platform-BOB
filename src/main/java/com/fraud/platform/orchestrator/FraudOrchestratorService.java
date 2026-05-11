@@ -3,9 +3,11 @@ package com.fraud.platform.orchestrator;
 import com.fraud.platform.agents.*;
 import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.FraudAlert;
 import com.fraud.platform.model.FraudDecision;
 import com.fraud.platform.service.DecisionService;
 import com.fraud.platform.service.ExplainabilityService;
+import com.fraud.platform.service.FraudNotificationService;
 import com.fraud.platform.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class FraudOrchestratorService {
     private final TransactionService transactionService;
     private final ExplainabilityService explainabilityService;
     private final DecisionService decisionService;
+    private final FraudNotificationService notificationService;
 
     // Thread pool for parallel agent execution
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
@@ -104,6 +107,9 @@ public class FraudOrchestratorService {
 
             // Update transaction with fraud decision
             updateTransaction(transaction.getTxnId(), decision);
+
+            // Create fraud alert for dashboard
+            createFraudAlert(decision);
 
             return decision;
 
@@ -246,10 +252,35 @@ public class FraudOrchestratorService {
      */
     private void updateTransaction(String txnId, FraudDecision decision) {
         try {
-            transactionService.updateFraudDecision(txnId, decision.getDecision(), decision.getFinalScore());
-            log.info("Updated transaction {} with fraud decision: {}", txnId, decision.getDecision());
+            transactionService.updateFraudDecisionWithDetails(
+                txnId,
+                decision.getDecision(),
+                decision.getFinalScore(),
+                decision.getAgentResults(),
+                decision.getAllReasons()
+            );
+            log.info("Updated transaction {} with fraud decision and agent results: {}", txnId, decision.getDecision());
         } catch (Exception e) {
             log.error("Failed to update transaction {} with fraud decision", txnId, e);
+        }
+    }
+
+    /**
+     * Create fraud alert for dashboard notifications.
+     *
+     * @param decision Fraud decision
+     */
+    private void createFraudAlert(FraudDecision decision) {
+        try {
+            // Only create alerts for REVIEW and REJECT decisions
+            if ("REVIEW".equals(decision.getDecision()) || "REJECT".equals(decision.getDecision())) {
+                FraudAlert alert = notificationService.createAlert(decision);
+                log.info("Fraud alert created: alertId={}, severity={}, txnId={}",
+                         alert.getAlertId(), alert.getSeverity(), decision.getTxnId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to create fraud alert for transaction: {}", decision.getTxnId(), e);
+            // Don't fail the fraud detection if alert creation fails
         }
     }
 

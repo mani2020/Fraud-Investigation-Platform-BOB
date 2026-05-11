@@ -1,0 +1,382 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// SIDEBAR
+// Desktop/Tablet navigation sidebar
+// ============================================
+
+.sidebar {
+  position: fixed;
+  top: $navbar-height;
+  left: 0;
+  bottom: 0;
+  width: $sidebar-width-expanded;
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border-right: 1px solid $border-primary;
+  box-shadow: $shadow-lg;
+  z-index: $z-sidebar;
+  transition: all $transition-base;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @include mobile {
+    display: none; // Hidden on mobile, use MobileDrawer instead
+  }
+
+  @include tablet {
+    top: $navbar-height;
+  }
+
+  // ============================================
+  // COLLAPSED STATE
+  // ============================================
+
+  &--collapsed {
+    width: $sidebar-width-collapsed;
+
+    .sidebar__content {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .sidebar__label,
+    .sidebar__description {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .sidebar__link {
+      justify-content: center;
+      padding: $spacing-md;
+    }
+
+    .sidebar__footer {
+      .sidebar__status-text {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+  }
+
+  // ============================================
+  // NAVIGATION
+  // ============================================
+
+  &__nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: $spacing-md 0;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: $radius-full;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__item {
+    margin: 0;
+    padding: 0 $spacing-sm;
+  }
+
+  // ============================================
+  // NAVIGATION LINKS
+  // ============================================
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md;
+    margin-bottom: $spacing-xs;
+    text-decoration: none;
+    color: $text-secondary;
+    border-radius: $radius-lg;
+    transition: all $transition-fast;
+    position: relative;
+    overflow: hidden;
+    min-height: $touch-target-min;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: $text-primary;
+      transform: translateX(4px);
+
+      .sidebar__icon {
+        color: $accent-primary;
+        transform: scale(1.1);
+      }
+    }
+
+    &:active {
+      transform: translateX(2px) scale(0.98);
+    }
+
+    // Active state
+    &--active {
+      background: $gradient-primary;
+      color: white;
+      box-shadow: $glow-purple;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: $gradient-accent;
+        border-radius: 0 $radius-md $radius-md 0;
+      }
+
+      .sidebar__icon {
+        color: white;
+        transform: scale(1.1);
+      }
+
+      .sidebar__indicator {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      &:hover {
+        transform: translateX(4px);
+        box-shadow: $glow-purple, $shadow-xl;
+      }
+    }
+  }
+
+  // ============================================
+  // LINK COMPONENTS
+  // ============================================
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: $text-secondary;
+    transition: all $transition-fast;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    transition: all $transition-base;
+  }
+
+  &__label {
+    font-size: $text-base;
+    font-weight: $font-medium;
+    line-height: $leading-tight;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all $transition-base;
+  }
+
+  &__description {
+    font-size: $text-xs;
+    color: $text-muted;
+    line-height: $leading-tight;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all $transition-base;
+  }
+
+  &__indicator {
+    position: absolute;
+    right: $spacing-md;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 8px;
+    height: 8px;
+    background: $gradient-accent;
+    border-radius: $radius-full;
+    opacity: 0;
+    transition: all $transition-fast;
+    box-shadow: $glow-purple;
+  }
+
+  // ============================================
+  // FOOTER
+  // ============================================
+
+  &__footer {
+    padding: $spacing-md;
+    border-top: 1px solid $border-primary;
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm;
+    border-radius: $radius-md;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  &__status-indicator {
+    width: 8px;
+    height: 8px;
+    background: $status-success;
+    border-radius: $radius-full;
+    box-shadow: 0 0 10px $status-success;
+    animation: pulse-glow 2s infinite;
+    flex-shrink: 0;
+  }
+
+  &__status-text {
+    font-size: $text-sm;
+    color: $status-success;
+    font-weight: $font-medium;
+    white-space: nowrap;
+    transition: all $transition-base;
+  }
+
+  // ============================================
+  // ANIMATIONS
+  // ============================================
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.2);
+    }
+  }
+
+  // ============================================
+  // TABLET SPECIFIC (768px - 1023px)
+  // Always collapsed on tablet
+  // ============================================
+
+  @include tablet {
+    width: $sidebar-width-collapsed;
+
+    .sidebar__content {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .sidebar__label,
+    .sidebar__description {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .sidebar__link {
+      justify-content: center;
+      padding: $spacing-md;
+    }
+
+    .sidebar__footer {
+      .sidebar__status-text {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+  }
+
+  // ============================================
+  // DESKTOP SPECIFIC (>= 1024px)
+  // Toggleable between expanded and collapsed
+  // ============================================
+
+  @include desktop {
+    // Default expanded state
+    width: $sidebar-width-expanded;
+
+    .sidebar__content {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar__label,
+    .sidebar__description {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar__link {
+      justify-content: flex-start;
+      padding: $spacing-md;
+    }
+
+    .sidebar__footer {
+      .sidebar__status-text {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+
+    // Collapsed state on desktop (when toggled)
+    &--collapsed {
+      width: $sidebar-width-collapsed;
+
+      .sidebar__content {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .sidebar__label,
+      .sidebar__description {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .sidebar__link {
+        justify-content: center;
+        padding: $spacing-md;
+      }
+
+      .sidebar__footer {
+        .sidebar__status-text {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+    }
+  }
+}
+
+// Made with Bob

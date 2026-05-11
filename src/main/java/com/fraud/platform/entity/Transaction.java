@@ -63,6 +63,12 @@ public class Transaction {
     @Column(name = "fraud_decision", length = 20)
     private String fraudDecision;
 
+    @Column(name = "agent_results", columnDefinition = "TEXT")
+    private String agentResultsJson;
+
+    @Column(name = "risk_factors", columnDefinition = "TEXT")
+    private String riskFactorsJson;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

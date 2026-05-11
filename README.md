@@ -106,7 +106,7 @@ npm install
 npm run dev
 ```
 
-The frontend will start on `http://localhost:5173`
+The frontend will start on `http://localhost:5174`
 
 ## API Endpoints
 
@@ -115,6 +115,16 @@ The frontend will start on `http://localhost:5173`
 POST   /api/transactions              # Submit transaction for fraud check
 GET    /api/transactions/{id}         # Get transaction details
 GET    /api/transactions              # List transactions
+```
+
+### Fraud Alert API
+```
+GET    /api/alerts                    # Get all recent alerts
+GET    /api/alerts/critical           # Get critical alerts only
+GET    /api/alerts/unacknowledged     # Get unacknowledged alerts
+GET    /api/alerts/{alertId}          # Get alert by ID
+PUT    /api/alerts/{alertId}/acknowledge  # Acknowledge alert
+GET    /api/alerts/stats              # Get alert statistics
 ```
 
 ### Case Management API
@@ -376,6 +386,7 @@ netstat -ano | findstr :8080
 ### Technical Documentation
 - [Fraud Flow Technical](docs/technical/FRAUD_FLOW_TECHNICAL.md) - Complete end-to-end transaction flow
 - [Fraud Flow Diagram](docs/technical/fraud-flow-diagram.html) - Interactive visual diagram
+- [Fraud Notification Service](docs/technical/FRAUD_NOTIFICATION_SERVICE.md) - Alert system for dashboard
 - [Database Schema](docs/technical/DATABASE_SCHEMA.md) - Complete database design
 - [Decision Service Output](docs/technical/DECISION_SERVICE_SAMPLE_OUTPUT.md) - Fraud decision examples
 - [Explainability Output](docs/technical/EXPLAINABILITY_SAMPLE_OUTPUT.md) - AI explanation examples

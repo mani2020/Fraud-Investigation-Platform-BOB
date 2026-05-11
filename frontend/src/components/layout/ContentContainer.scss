@@ -1,0 +1,114 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// CONTENT CONTAINER
+// Responsive content wrapper
+// ============================================
+
+.content-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: $content-padding;
+
+  @include mobile {
+    padding: $content-padding-mobile;
+  }
+
+  @include tablet {
+    padding: $content-padding-tablet;
+  }
+
+  @include desktop {
+    max-width: $content-max-width;
+  }
+
+  // ============================================
+  // FULL WIDTH VARIANT
+  // ============================================
+
+  &--full-width {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  // ============================================
+  // BACKGROUND VARIANTS
+  // ============================================
+
+  &--transparent {
+    background: transparent;
+  }
+
+  &--glass {
+    @include glass-card;
+    padding: $spacing-xl;
+
+    @include mobile {
+      padding: $spacing-lg;
+    }
+  }
+
+  &--solid {
+    background: $bg-secondary;
+    border: 1px solid $border-primary;
+    border-radius: $radius-xl;
+    padding: $spacing-xl;
+    box-shadow: $shadow-md;
+
+    @include mobile {
+      padding: $spacing-lg;
+      border-radius: $radius-lg;
+    }
+  }
+
+  // ============================================
+  // SPACING UTILITIES
+  // ============================================
+
+  &--no-padding {
+    padding: 0;
+  }
+
+  &--padding-sm {
+    padding: $spacing-md;
+
+    @include mobile {
+      padding: $spacing-sm;
+    }
+  }
+
+  &--padding-lg {
+    padding: $spacing-2xl;
+
+    @include mobile {
+      padding: $spacing-xl;
+    }
+  }
+
+  // ============================================
+  // NESTED CONTENT
+  // ============================================
+
+  // Ensure proper spacing for nested elements
+  > * + * {
+    margin-top: $spacing-lg;
+
+    @include mobile {
+      margin-top: $spacing-md;
+    }
+  }
+
+  // Remove top margin from first child
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  // Remove bottom margin from last child
+  > *:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Made with Bob

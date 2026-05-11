@@ -1,0 +1,135 @@
+.custom-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 4px 4px;
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .pagination-info {
+    color: #c6c6c6;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+
+    .pagination-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f4f4f4;
+      min-width: 40px;
+      height: 40px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-radius: 4px;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      svg {
+        fill: #f4f4f4;
+      }
+    }
+
+    .page-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0.5rem;
+
+      .cds--select {
+        min-width: 70px;
+      }
+
+      .cds--select-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #f4f4f4;
+        height: 40px;
+        padding: 0 2rem 0 0.75rem;
+        font-size: 0.875rem;
+
+        &:focus {
+          outline: 2px solid #0f62fe;
+          outline-offset: -2px;
+        }
+      }
+
+      .page-text {
+        color: #c6c6c6;
+        font-size: 0.875rem;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .page-size-selector {
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+
+    .cds--select {
+      min-width: 140px;
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+
+    .cds--select-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f4f4f4;
+      height: 40px;
+      font-size: 0.875rem;
+
+      &:focus {
+        outline: 2px solid #0f62fe;
+        outline-offset: -2px;
+      }
+    }
+  }
+
+  .cds--label {
+    display: none;
+  }
+}
+
+// Made with Bob

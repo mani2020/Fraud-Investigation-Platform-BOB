@@ -1,0 +1,104 @@
+@import '../../styles/variables';
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-full;
+  font-size: $text-sm;
+  font-weight: $font-semibold;
+  @include smooth-transition(all);
+  white-space: nowrap;
+  
+  // Default variant
+  &--default {
+    background: rgba($text-secondary, 0.2);
+    color: $text-secondary;
+    border: 1px solid rgba($text-secondary, 0.3);
+  }
+  
+  // Success variant
+  &--success {
+    background: rgba($status-success, 0.2);
+    color: $status-success;
+    border: 1px solid rgba($status-success, 0.3);
+    
+    &:hover {
+      background: rgba($status-success, 0.3);
+    }
+  }
+  
+  // Warning variant
+  &--warning {
+    background: rgba($status-warning, 0.2);
+    color: $status-warning;
+    border: 1px solid rgba($status-warning, 0.3);
+    
+    &:hover {
+      background: rgba($status-warning, 0.3);
+    }
+  }
+  
+  // Danger variant
+  &--danger {
+    background: rgba($status-danger, 0.2);
+    color: $status-danger;
+    border: 1px solid rgba($status-danger, 0.3);
+    
+    &:hover {
+      background: rgba($status-danger, 0.3);
+    }
+  }
+  
+  // Info variant
+  &--info {
+    background: rgba($status-info, 0.2);
+    color: $status-info;
+    border: 1px solid rgba($status-info, 0.3);
+    
+    &:hover {
+      background: rgba($status-info, 0.3);
+    }
+  }
+  
+  // Pending variant
+  &--pending {
+    background: rgba($status-pending, 0.2);
+    color: $status-pending;
+    border: 1px solid rgba($status-pending, 0.3);
+    
+    &:hover {
+      background: rgba($status-pending, 0.3);
+    }
+  }
+  
+  // Glow effect
+  &--glow {
+    &.status-badge--success {
+      box-shadow: $glow-success;
+    }
+    
+    &.status-badge--warning {
+      box-shadow: 0 0 20px rgba($status-warning, 0.4);
+    }
+    
+    &.status-badge--danger {
+      box-shadow: $glow-danger;
+    }
+    
+    &.status-badge--info {
+      box-shadow: $glow-blue;
+    }
+    
+    &.status-badge--pending {
+      box-shadow: $glow-purple;
+    }
+  }
+  
+  // Pulse animation
+  &--pulse {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+// Made with Bob

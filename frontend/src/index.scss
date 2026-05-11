@@ -1,0 +1,222 @@
+// Premium Futuristic Theme for Fraud Investigation Platform
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/themes';
+
+// Import our premium theme system
+@import './styles/variables';
+@import './styles/global';
+
+// Include Carbon dark theme as base
+:root {
+  @include theme(themes.$g100);
+}
+
+// Override Carbon theme with our premium colors
+:root {
+  --cds-background: #{$bg-primary};
+  --cds-layer-01: #{$bg-secondary};
+  --cds-layer-02: #{$bg-tertiary};
+  --cds-field-01: #{$bg-card};
+  --cds-text-primary: #{$text-primary};
+  --cds-text-secondary: #{$text-secondary};
+  --cds-text-placeholder: #{$text-muted};
+  --cds-border-subtle: #{$border-primary};
+  --cds-border-strong: #{$border-secondary};
+  --cds-interactive: #{$accent-primary};
+  --cds-focus: #{$accent-cyan};
+  --cds-support-error: #{$status-danger};
+  --cds-support-success: #{$status-success};
+  --cds-support-warning: #{$status-warning};
+  --cds-support-info: #{$status-info};
+}
+
+// Premium fraud score indicators with glow effects
+.score-low {
+  color: $status-success;
+  font-weight: $font-semibold;
+  text-shadow: $glow-success;
+}
+
+.score-medium {
+  color: $status-warning;
+  font-weight: $font-semibold;
+  text-shadow: $glow-purple;
+}
+
+.score-high {
+  color: #ff832b;
+  font-weight: $font-semibold;
+  text-shadow: 0 0 20px rgba(255, 131, 43, 0.4);
+}
+
+.score-critical {
+  color: $status-danger;
+  font-weight: $font-bold;
+  text-shadow: $glow-danger;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+// Premium utility classes
+.full-height {
+  height: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+// Spacing utilities with our design system
+.mt-1 { margin-top: $spacing-md; }
+.mt-2 { margin-top: $spacing-xl; }
+.mb-1 { margin-bottom: $spacing-md; }
+.mb-2 { margin-bottom: $spacing-xl; }
+.p-1 { padding: $spacing-md; }
+.p-2 { padding: $spacing-xl; }
+
+// Premium card variants
+.premium-card {
+  @include glass-card;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-lg;
+  
+  &:hover {
+    @include glass-card-hover;
+  }
+  
+  &.gradient-border {
+    @include gradient-border($gradient-accent);
+  }
+  
+  &.glow-purple {
+    box-shadow: $shadow-lg, $glow-purple;
+  }
+  
+  &.glow-cyan {
+    box-shadow: $shadow-lg, $glow-cyan;
+  }
+  
+  &.glow-danger {
+    box-shadow: $shadow-lg, $glow-danger;
+  }
+}
+
+// Status badges with premium styling
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-full;
+  font-size: $text-sm;
+  font-weight: $font-semibold;
+  @include smooth-transition(all);
+  
+  &.success {
+    background: rgba($status-success, 0.2);
+    color: $status-success;
+    border: 1px solid rgba($status-success, 0.3);
+    
+    &:hover {
+      background: rgba($status-success, 0.3);
+      box-shadow: $glow-success;
+    }
+  }
+  
+  &.warning {
+    background: rgba($status-warning, 0.2);
+    color: $status-warning;
+    border: 1px solid rgba($status-warning, 0.3);
+    
+    &:hover {
+      background: rgba($status-warning, 0.3);
+      box-shadow: 0 0 20px rgba($status-warning, 0.4);
+    }
+  }
+  
+  &.danger {
+    background: rgba($status-danger, 0.2);
+    color: $status-danger;
+    border: 1px solid rgba($status-danger, 0.3);
+    
+    &:hover {
+      background: rgba($status-danger, 0.3);
+      box-shadow: $glow-danger;
+    }
+  }
+  
+  &.info {
+    background: rgba($status-info, 0.2);
+    color: $status-info;
+    border: 1px solid rgba($status-info, 0.3);
+    
+    &:hover {
+      background: rgba($status-info, 0.3);
+      box-shadow: $glow-blue;
+    }
+  }
+  
+  &.pending {
+    background: rgba($status-pending, 0.2);
+    color: $status-pending;
+    border: 1px solid rgba($status-pending, 0.3);
+    
+    &:hover {
+      background: rgba($status-pending, 0.3);
+      box-shadow: $glow-purple;
+    }
+  }
+}
+
+// Metric card for dashboard
+.metric-card {
+  @include glass-card;
+  padding: $spacing-xl;
+  text-align: center;
+  @include smooth-transition(all);
+  
+  &:hover {
+    @include glass-card-hover;
+  }
+  
+  .metric-value {
+    font-size: $text-4xl;
+    font-weight: $font-bold;
+    @include text-gradient($gradient-accent);
+    margin-bottom: $spacing-sm;
+  }
+  
+  .metric-label {
+    font-size: $text-sm;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .metric-change {
+    font-size: $text-sm;
+    font-weight: $font-medium;
+    margin-top: $spacing-sm;
+    
+    &.positive {
+      color: $status-success;
+    }
+    
+    &.negative {
+      color: $status-danger;
+    }
+  }
+}
+
+// Loading skeleton with shimmer effect
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba($bg-tertiary, 0.5) 0%,
+    rgba($accent-primary, 0.1) 50%,
+    rgba($bg-tertiary, 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  border-radius: $radius-md;
+}
+
+// Made with Bob - Premium Edition

@@ -1,0 +1,83 @@
+@import '../../styles/variables';
+
+.premium-card {
+  @include glass-card;
+  @include smooth-transition(all);
+  position: relative;
+  overflow: hidden;
+  
+  // Gradient border variants
+  &--gradient {
+    @include gradient-border($gradient-accent);
+  }
+  
+  // Glow variants
+  &--glow-purple {
+    box-shadow: $shadow-lg, $glow-purple;
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-purple;
+    }
+  }
+  
+  &--glow-cyan {
+    box-shadow: $shadow-lg, $glow-cyan;
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-cyan;
+    }
+  }
+  
+  &--glow-danger {
+    box-shadow: $shadow-lg, $glow-danger;
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-danger;
+    }
+  }
+  
+  // Hoverable state
+  &--hoverable:hover {
+    @include glass-card-hover;
+  }
+  
+  // Clickable state
+  &--clickable {
+    cursor: pointer;
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  // Header section
+  &__header {
+    margin-bottom: $spacing-lg;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid $border-primary;
+  }
+  
+  &__title {
+    font-size: $text-xl;
+    font-weight: $font-bold;
+    color: $text-primary;
+    margin: 0 0 $spacing-xs 0;
+    @include text-gradient($gradient-accent);
+  }
+  
+  &__subtitle {
+    font-size: $text-sm;
+    color: $text-secondary;
+    margin: 0;
+  }
+  
+  // Content section
+  &__content {
+    color: $text-secondary;
+  }
+  
+  // Animation on mount
+  animation: slide-in-up $transition-base;
+}
+
+// Made with Bob

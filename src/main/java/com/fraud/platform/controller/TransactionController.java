@@ -19,7 +19,6 @@ import java.util.List;
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class TransactionController {
 
     private final TransactionService transactionService;

@@ -13,10 +13,10 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${spring.kafka.topics.fraud-transactions}")
+    @Value("${kafka.topics.fraud-transactions}")
     private String fraudTransactionsTopic;
 
-    @Value("${spring.kafka.topics.fraud-decisions}")
+    @Value("${kafka.topics.fraud-results}")
     private String fraudDecisionsTopic;
 
     /**

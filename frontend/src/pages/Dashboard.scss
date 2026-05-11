@@ -1,0 +1,487 @@
+@import '../styles/variables';
+
+.premium-dashboard {
+  animation: fade-in 0.6s ease-out;
+// ============================================
+// HERO STATS (New Layout)
+// ============================================
+
+.dashboard-hero-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: $spacing-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-2xl;
+  background: $gradient-primary;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-xl, $glow-purple;
+  animation: slide-in-up 0.4s ease;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-md;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-xl;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-xs;
+
+    @media (max-width: $breakpoint-md) {
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
+      padding: $spacing-sm 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .stat-value {
+      font-size: $text-3xl;
+      font-weight: $font-bold;
+      color: white;
+      animation: slide-in-up 0.6s ease-out;
+
+      @media (max-width: $breakpoint-md) {
+        font-size: $text-2xl;
+      }
+    }
+
+    .stat-label {
+      font-size: $text-sm;
+      color: rgba(255, 255, 255, 0.8);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+
+      @media (max-width: $breakpoint-md) {
+        font-size: $text-xs;
+      }
+    }
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+
+    @media (max-width: $breakpoint-md) {
+      display: none;
+    }
+  }
+}
+
+// ============================================
+// ACTIVITY GRID
+// ============================================
+
+.dashboard-activity-grid {
+  margin-top: $spacing-2xl;
+}
+
+}
+
+// Hero Section
+.dashboard-hero {
+  @include glass-card;
+  padding: $spacing-2xl;
+  margin-bottom: $spacing-xl;
+  border: 1px solid rgba($accent-cyan, 0.2);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: $gradient-primary;
+  }
+  
+  .hero-content {
+    margin-bottom: $spacing-xl;
+    
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      font-size: $text-3xl;
+      font-weight: $font-bold;
+      @include text-gradient($gradient-primary);
+      margin-bottom: $spacing-sm;
+      
+      .hero-icon {
+        animation: pulse-glow 3s ease-in-out infinite;
+        filter: drop-shadow($glow-cyan);
+      }
+    }
+    
+    .hero-subtitle {
+      font-size: $text-lg;
+      color: $text-secondary;
+      margin-left: 48px; // Align with title text
+    }
+  }
+  
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: $spacing-xl;
+    padding: $spacing-lg 0;
+    
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-xs;
+      
+      .stat-value {
+        font-size: $text-3xl;
+        font-weight: $font-bold;
+        @include text-gradient($gradient-primary);
+        animation: slide-in-up 0.6s ease-out;
+      }
+      
+      .stat-label {
+        font-size: $text-sm;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+    }
+    
+    .stat-divider {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba($accent-cyan, 0.5),
+        transparent
+      );
+    }
+  }
+}
+
+// Metrics Grid
+.metrics-grid {
+  margin-bottom: $spacing-xl;
+  
+  .cds--col {
+    animation: slide-in-up 0.6s ease-out;
+    
+    &:nth-child(1) { animation-delay: 0.1s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+  }
+}
+
+// Activity Grid
+.activity-grid {
+  margin-bottom: $spacing-xl;
+  
+  .cds--col {
+    animation: slide-in-up 0.6s ease-out;
+    
+    &:nth-child(1) { animation-delay: 0.4s; }
+    &:nth-child(2) { animation-delay: 0.5s; }
+  }
+}
+
+// Transactions List
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  
+  .transaction-item {
+    padding: $spacing-md;
+    background: rgba($bg-secondary, 0.3);
+    border-radius: $radius-md;
+    border: 1px solid rgba($accent-cyan, 0.1);
+    @include smooth-transition(all);
+    
+    &:hover {
+      background: rgba($bg-secondary, 0.5);
+      border-color: rgba($accent-cyan, 0.3);
+      transform: translateX(4px);
+      box-shadow: $shadow-lg, $glow-purple;
+    }
+    
+    .transaction-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-xs;
+      
+      .transaction-id {
+        font-family: $font-mono;
+        font-size: $text-sm;
+        color: $accent-cyan;
+        font-weight: $font-semibold;
+      }
+      
+      .transaction-amount {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        @include text-gradient($gradient-primary);
+      }
+    }
+    
+    .transaction-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .transaction-time {
+        font-size: $text-xs;
+        color: $text-secondary;
+        font-family: $font-mono;
+      }
+    }
+  }
+  
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-2xl;
+    color: $text-secondary;
+    
+    svg {
+      margin-bottom: $spacing-md;
+      opacity: 0.5;
+    }
+  }
+}
+
+// Agents List
+.agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  
+  .agent-item {
+    .agent-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-sm;
+      
+      .agent-name {
+        font-size: $text-base;
+        font-weight: $font-semibold;
+        color: $text-primary;
+      }
+    }
+    
+    .agent-score {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      
+      .score-bar {
+        flex: 1;
+        height: 8px;
+        background: rgba($bg-secondary, 0.5);
+        border-radius: $radius-full;
+        overflow: hidden;
+        position: relative;
+        
+        .score-fill {
+          height: 100%;
+          background: $gradient-primary;
+          border-radius: $radius-full;
+          @include smooth-transition(width);
+          position: relative;
+          
+          &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              rgba(white, 0.3),
+              transparent
+            );
+            animation: shimmer 2s infinite;
+          }
+        }
+      }
+      
+      .score-value {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $accent-cyan;
+        min-width: 45px;
+        text-align: right;
+      }
+    }
+  }
+}
+
+// System Status
+.status-grid {
+  animation: slide-in-up 0.6s ease-out 0.6s;
+  animation-fill-mode: both;
+}
+
+.system-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-lg;
+  
+  .status-item {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    padding: $spacing-md;
+    background: rgba($bg-secondary, 0.3);
+    border-radius: $radius-md;
+    border: 1px solid rgba($accent-cyan, 0.1);
+    @include smooth-transition(all);
+    
+    &:hover {
+      background: rgba($bg-secondary, 0.5);
+      border-color: rgba($accent-cyan, 0.3);
+      transform: translateY(-2px);
+      box-shadow: $shadow-lg, $glow-cyan;
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: $radius-full;
+      background: $status-danger;
+      box-shadow: 0 0 10px rgba($status-danger, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+      
+      &.active {
+        background: $status-success;
+        box-shadow: $glow-success;
+      }
+    }
+    
+    .status-label {
+      font-size: $text-sm;
+      color: $text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .status-value {
+      font-size: $text-base;
+      font-weight: $font-semibold;
+      color: $text-primary;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: $breakpoint-lg) {
+  .dashboard-hero {
+    padding: $spacing-xl;
+    
+    .hero-title {
+      font-size: $text-2xl;
+    }
+    
+    .hero-stats {
+      flex-wrap: wrap;
+      
+      .stat-divider {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .dashboard-hero {
+    padding: $spacing-lg;
+    
+    .hero-title {
+      font-size: $text-xl;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .hero-subtitle {
+      margin-left: 0;
+      font-size: $text-base;
+    }
+    
+    .hero-stats {
+      gap: $spacing-md;
+      
+      .stat-item {
+        .stat-value {
+          font-size: $text-2xl;
+        }
+      }
+    }
+  }
+  
+  .system-status {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .dashboard-hero {
+    padding: $spacing-md;
+    
+    .hero-stats {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .stat-item {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: $spacing-sm 0;
+        border-bottom: 1px solid rgba($accent-cyan, 0.1);
+        
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+  }
+  
+  .system-status {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Pulse animation for status indicators
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+// Made with Bob

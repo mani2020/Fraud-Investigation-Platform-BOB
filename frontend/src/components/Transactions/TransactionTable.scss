@@ -1,0 +1,396 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// TRANSACTION TABLE
+// Enterprise-grade responsive transaction table
+// ============================================
+
+.transaction-table {
+  width: 100%;
+  position: relative;
+
+  // ============================================
+  // DESKTOP TABLE VIEW
+  // ============================================
+
+  &__desktop {
+    display: block;
+    overflow-x: auto;
+    border-radius: $radius-xl;
+    background: $glass-bg;
+    backdrop-filter: blur($glass-blur);
+    -webkit-backdrop-filter: blur($glass-blur);
+    border: 1px solid $border-primary;
+    box-shadow: $shadow-lg;
+
+    @include mobile {
+      display: none;
+    }
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: $radius-full;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 800px;
+
+    // Override Carbon table styles
+    .cds--data-table {
+      background: transparent;
+    }
+
+    .cds--data-table thead {
+      background: rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .cds--data-table tbody {
+      background: transparent;
+    }
+  }
+
+  // ============================================
+  // TABLE HEADER
+  // ============================================
+
+  &__header {
+    padding: $spacing-md $spacing-lg;
+    color: $text-primary;
+    font-weight: $font-semibold;
+    font-size: $text-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid $border-accent;
+    cursor: pointer;
+    user-select: none;
+    transition: all $transition-fast;
+    white-space: nowrap;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: $accent-primary;
+    }
+
+    // Priority-based visibility
+    &--high {
+      // Always visible
+    }
+
+    &--medium {
+      @include tablet {
+        display: none;
+      }
+    }
+
+    &--low {
+      @include desktop {
+        display: table-cell;
+      }
+      @media (max-width: #{$breakpoint-desktop - 1px}) {
+        display: none;
+      }
+    }
+  }
+
+  &__header-content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    justify-content: space-between;
+  }
+
+  &__sort-icon {
+    display: flex;
+    align-items: center;
+    color: $accent-primary;
+  }
+
+  // ============================================
+  // TABLE ROW
+  // ============================================
+
+  &__row {
+    border-bottom: 1px solid $border-primary;
+    transition: all $transition-fast;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateX(2px);
+      box-shadow: inset 4px 0 0 $accent-primary;
+    }
+
+    &:active {
+      transform: translateX(1px);
+    }
+  }
+
+  // ============================================
+  // TABLE CELL
+  // ============================================
+
+  &__cell {
+    padding: $spacing-md $spacing-lg;
+    color: $text-secondary;
+    font-size: $text-sm;
+    vertical-align: middle;
+
+    // Priority-based visibility (matches header)
+    &--high {
+      // Always visible
+    }
+
+    &--medium {
+      @include tablet {
+        display: none;
+      }
+    }
+
+    &--low {
+      @include desktop {
+        display: table-cell;
+      }
+      @media (max-width: #{$breakpoint-desktop - 1px}) {
+        display: none;
+      }
+    }
+  }
+
+  &__amount {
+    font-weight: $font-semibold;
+    color: $text-primary;
+    font-size: $text-base;
+  }
+
+  &__timestamp {
+    color: $text-muted;
+    font-size: $text-xs;
+  }
+
+  // ============================================
+  // MOBILE CARD VIEW
+  // ============================================
+
+  &__mobile {
+    display: none;
+
+    @include mobile {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+    }
+  }
+
+  // ============================================
+  // PAGINATION
+  // ============================================
+
+  &__pagination {
+    margin-top: $spacing-lg;
+    display: flex;
+    justify-content: center;
+
+    @include mobile {
+      margin-top: $spacing-md;
+    }
+
+    // Override Carbon pagination styles
+    .cds--pagination {
+      background: $glass-bg;
+      backdrop-filter: blur($glass-blur);
+      -webkit-backdrop-filter: blur($glass-blur);
+      border: 1px solid $border-primary;
+      border-radius: $radius-lg;
+      padding: $spacing-sm;
+    }
+
+    .cds--pagination__button {
+      color: $text-primary;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .cds--select-input {
+      background: rgba(255, 255, 255, 0.05);
+      color: $text-primary;
+      border-color: $border-primary;
+    }
+  }
+}
+
+// ============================================
+// TRANSACTION CARD (Mobile)
+// ============================================
+
+.transaction-card {
+  @include glass-card;
+  padding: $spacing-md;
+  cursor: pointer;
+  transition: all $transition-fast;
+  animation: slide-in-up 0.3s ease;
+
+  &:hover {
+    @include glass-card-hover;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  // ============================================
+  // CARD HEADER
+  // ============================================
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-sm;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid $border-primary;
+  }
+
+  &__id {
+    font-size: $text-sm;
+    font-weight: $font-semibold;
+    color: $text-primary;
+    font-family: $font-mono;
+  }
+
+  // ============================================
+  // CARD AMOUNT
+  // ============================================
+
+  &__amount {
+    font-size: $text-2xl;
+    font-weight: $font-bold;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    background: $gradient-accent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  // ============================================
+  // CARD DETAILS
+  // ============================================
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+  }
+
+  &__detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__label {
+    font-size: $text-xs;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  &__value {
+    font-size: $text-sm;
+    color: $text-secondary;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // ============================================
+  // CARD FOOTER
+  // ============================================
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: $spacing-sm;
+    border-top: 1px solid $border-primary;
+  }
+}
+
+// ============================================
+// EMPTY STATE
+// ============================================
+
+.transaction-table__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl;
+  text-align: center;
+  color: $text-muted;
+
+  svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: $spacing-lg;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: $text-lg;
+    margin: 0;
+  }
+}
+
+// ============================================
+// LOADING STATE
+// ============================================
+
+.transaction-table--loading {
+  opacity: 0.6;
+  pointer-events: none;
+
+  .transaction-table__row,
+  .transaction-card {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+// Made with Bob

@@ -1,0 +1,185 @@
+@import '../../styles/variables';
+@import '../../styles/breakpoints';
+
+// ============================================
+// DASHBOARD GRID
+// Responsive grid layout for dashboard widgets
+// ============================================
+
+.dashboard-grid {
+  display: grid;
+  gap: $spacing-lg;
+  width: 100%;
+
+  // ============================================
+  // RESPONSIVE COLUMNS
+  // ============================================
+
+  // Mobile: 1 column
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+
+  // Tablet: 2 columns
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-lg;
+  }
+
+  // Desktop: Auto-fit with min 300px
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: $spacing-xl;
+  }
+
+  // ============================================
+  // COLUMN VARIANTS
+  // ============================================
+
+  &--cols-1 {
+    grid-template-columns: 1fr;
+  }
+
+  &--cols-2 {
+    @include tablet-up {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &--cols-3 {
+    @include tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include desktop {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  &--cols-4 {
+    @include tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include desktop {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  &--cols-auto {
+    @include desktop {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+
+  // ============================================
+  // GAP VARIANTS
+  // ============================================
+
+  &--gap-sm {
+    gap: $spacing-sm;
+
+    @include mobile {
+      gap: $spacing-xs;
+    }
+  }
+
+  &--gap-md {
+    gap: $spacing-lg;
+
+    @include mobile {
+      gap: $spacing-md;
+    }
+  }
+
+  &--gap-lg {
+    gap: $spacing-xl;
+
+    @include mobile {
+      gap: $spacing-lg;
+    }
+  }
+
+  // ============================================
+  // GRID ITEMS
+  // ============================================
+
+  > * {
+    min-width: 0; // Prevent grid blowout
+    animation: fade-in 0.3s ease;
+  }
+
+  // ============================================
+  // SPECIAL LAYOUTS
+  // ============================================
+
+  // Full width item
+  .grid-item-full {
+    grid-column: 1 / -1;
+  }
+
+  // Span 2 columns on desktop
+  .grid-item-span-2 {
+    @include desktop {
+      grid-column: span 2;
+    }
+  }
+
+  // Span 3 columns on desktop
+  .grid-item-span-3 {
+    @include desktop {
+      grid-column: span 3;
+    }
+  }
+
+  // ============================================
+  // MASONRY LAYOUT (Optional)
+  // ============================================
+
+  &--masonry {
+    @include desktop {
+      grid-auto-rows: minmax(100px, auto);
+      grid-auto-flow: dense;
+    }
+  }
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  &--loading {
+    opacity: 0.6;
+    pointer-events: none;
+
+    > * {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+// Made with Bob

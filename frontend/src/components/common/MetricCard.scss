@@ -1,0 +1,138 @@
+@import '../../styles/variables';
+
+.metric-card {
+  @include glass-card;
+  @include smooth-transition(all);
+  padding: $spacing-xl;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  
+  // Animated entrance
+  animation: slide-in-up $transition-base;
+  
+  &:hover {
+    @include glass-card-hover;
+  }
+  
+  // Variant styles
+  &--purple {
+    @include gradient-border($gradient-accent);
+    
+    .metric-card__value {
+      @include text-gradient($gradient-accent);
+    }
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-purple;
+    }
+  }
+  
+  &--cyan {
+    @include gradient-border($gradient-cyan);
+    
+    .metric-card__value {
+      @include text-gradient($gradient-cyan);
+    }
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-cyan;
+    }
+  }
+  
+  &--danger {
+    @include gradient-border($gradient-danger);
+    
+    .metric-card__value {
+      color: $status-danger;
+      text-shadow: $glow-danger;
+    }
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-danger;
+    }
+  }
+  
+  &--success {
+    @include gradient-border($gradient-success);
+    
+    .metric-card__value {
+      color: $status-success;
+      text-shadow: $glow-success;
+    }
+    
+    &:hover {
+      box-shadow: $shadow-xl, $glow-success;
+    }
+  }
+  
+  // Icon
+  &__icon {
+    font-size: $text-3xl;
+    margin-bottom: $spacing-md;
+    opacity: 0.8;
+  }
+  
+  // Value
+  &__value {
+    font-size: $text-4xl;
+    font-weight: $font-bold;
+    line-height: $leading-tight;
+    margin-bottom: $spacing-sm;
+    @include text-gradient($gradient-accent);
+  }
+  
+  // Label
+  &__label {
+    font-size: $text-sm;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: $font-medium;
+  }
+  
+  // Change indicator
+  &__change {
+    font-size: $text-sm;
+    font-weight: $font-semibold;
+    margin-top: $spacing-md;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-full;
+    display: inline-block;
+    
+    &--positive {
+      color: $status-success;
+      background: rgba($status-success, 0.1);
+      border: 1px solid rgba($status-success, 0.2);
+    }
+    
+    &--negative {
+      color: $status-danger;
+      background: rgba($status-danger, 0.1);
+      border: 1px solid rgba($status-danger, 0.2);
+    }
+    
+    &--neutral {
+      color: $text-secondary;
+      background: rgba($text-secondary, 0.1);
+      border: 1px solid rgba($text-secondary, 0.2);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: $breakpoint-md) {
+  .metric-card {
+    padding: $spacing-lg;
+    
+    &__value {
+      font-size: $text-3xl;
+    }
+    
+    &__icon {
+      font-size: $text-2xl;
+    }
+  }
+}
+
+// Made with Bob
