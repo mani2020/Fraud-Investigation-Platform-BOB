@@ -51,10 +51,7 @@ com.fraud.platform/
 ```
 
 ### Event Flow
-```
-<img width="2400" height="1360" alt="image" src="https://github.com/user-attachments/assets/7423606a-102c-4f30-876b-a86c0041da18" />
-
-```
+refer attached img which is fraud-flow-diagram
 
 ## Quick Start
 
