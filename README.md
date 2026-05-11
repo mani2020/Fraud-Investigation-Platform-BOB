@@ -352,15 +352,6 @@ mvn clean install
 netstat -ano | findstr :8080
 ```
 
-## Next Steps
-
-Follow the implementation plan in `HACKATHON_PLAN.md`:
-
-1. **Day 1**: Database schema and Kafka integration
-2. **Day 2**: Fraud detection agents and decision service
-3. **Day 3**: Additional agents and React dashboard setup
-4. **Day 4**: Dashboard features and case management
-5. **Day 5**: Demo polish and visual enhancements
 
 ## Documentation
 
@@ -403,4 +394,4 @@ For questions or issues, contact the development team.
 
 ---
 
-**Made with ❤️ for the Fraud Investigation Hackathon**
+**Made with ❤️ for the Bob-a-thon Hackathon**
