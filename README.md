@@ -52,8 +52,8 @@ com.fraud.platform/
 
 ### Event Flow
 ```
-Transaction → Kafka → Orchestrator → Fraud Agents → Decision Service → 
-Case Management / Alerts → Dashboard
+<img width="2400" height="1360" alt="image" src="https://github.com/user-attachments/assets/7423606a-102c-4f30-876b-a86c0041da18" />
+
 ```
 
 ## Quick Start
