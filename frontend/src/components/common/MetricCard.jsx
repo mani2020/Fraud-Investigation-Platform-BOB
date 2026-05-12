@@ -12,11 +12,13 @@ const MetricCard = ({
   icon: Icon,
   variant = 'default', // default, purple, cyan, danger, success
   className = '',
+  onClick,
   ...props
 }) => {
   const cardClasses = [
     'metric-card',
     `metric-card--${variant}`,
+    onClick ? 'metric-card--clickable' : '',
     className
   ].filter(Boolean).join(' ');
 
@@ -26,7 +28,14 @@ const MetricCard = ({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={cardClasses} {...props}>
+    <div
+      className={cardClasses}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyPress={onClick ? (e) => e.key === 'Enter' && onClick(e) : undefined}
+      {...props}
+    >
       {Icon && (
         <div className="metric-card__icon">
           <Icon size={32} />

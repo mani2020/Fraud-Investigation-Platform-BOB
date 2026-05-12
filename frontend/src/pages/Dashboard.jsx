@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Security,
   CheckmarkFilled,
   WarningAlt,
   ErrorFilled,
 } from '@carbon/icons-react';
+import {
+  DataTable,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+  TableBody,
+  TableCell,
+  Tag,
+} from '@carbon/react';
 import PageHeader from '../components/layout/PageHeader';
 import DashboardGrid from '../components/dashboard/DashboardGrid';
 import PremiumCard from '../components/common/PremiumCard';
@@ -15,6 +27,7 @@ import { API_ENDPOINTS } from '../config/api';
 import './Dashboard.scss';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState({
     totalTransactions: 0,
     approvedTransactions: 0,
@@ -49,10 +62,10 @@ const Dashboard = () => {
         alerts = [];
       }
 
-      // Calculate metrics
-      const approved = transactions.filter(t => t.status === 'APPROVED').length;
-      const flagged = transactions.filter(t => t.status === 'FLAGGED').length;
-      const blocked = transactions.filter(t => t.status === 'BLOCKED' || t.status === 'REVIEW').length;
+      // Calculate metrics based on fraudDecision field
+      const approved = transactions.filter(t => t.fraudDecision === 'APPROVE').length;
+      const flagged = transactions.filter(t => t.fraudDecision === 'OTP' || t.fraudDecision === 'HOLD').length;
+      const blocked = transactions.filter(t => t.fraudDecision === 'BLOCK').length;
       const avgScore = transactions.reduce((sum, t) => sum + (t.fraudScore || 0), 0) / transactions.length || 0;
 
       setMetrics({
@@ -121,124 +134,127 @@ const Dashboard = () => {
           label="Approved Transactions"
           icon={CheckmarkFilled}
           variant="success"
+          onClick={() => navigate('/transactions', { state: { filter: 'APPROVE' } })}
         />
         <MetricCard
           value={metrics.flaggedTransactions}
           label="Flagged for Review"
           icon={WarningAlt}
           variant="warning"
+          onClick={() => navigate('/transactions', { state: { filter: 'FLAGGED' } })}
         />
         <MetricCard
           value={metrics.blockedTransactions}
           label="Blocked Transactions"
           icon={ErrorFilled}
           variant="danger"
+          onClick={() => navigate('/transactions', { state: { filter: 'BLOCK' } })}
         />
       </DashboardGrid>
 
-      {/* Activity Grid */}
-      <DashboardGrid columns={2} gap="lg" className="dashboard-activity-grid">
+      {/* Recent Transactions - Full Width */}
+      <DashboardGrid columns={1} gap="lg">
         <PremiumCard
           title="Recent Transactions"
           subtitle="Latest payment activity with fraud scores"
           variant="gradient"
-          hoverable
+          className="recent-transactions-table"
         >
-          <div className="transactions-list">
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((txn, index) => (
-                <div key={index} className="transaction-item">
-                  <div className="transaction-info">
-                    <span className="transaction-id">{txn.transactionId || `TXN-${1000 + index}`}</span>
-                    <span className="transaction-amount">
-                      ${(txn.amount || Math.random() * 10000).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="transaction-meta">
-                    <span className="transaction-time">
-                      {new Date(txn.timestamp || Date.now()).toLocaleTimeString()}
-                    </span>
-                    <StatusBadge
-                      status={getFraudScoreStatus(txn.fraudScore || Math.random() * 100)}
-                      type={getFraudScoreColor(txn.fraudScore || Math.random() * 100)}
-                      glow
-                    />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <Security size={48} />
-                <p>No recent transactions</p>
-              </div>
-            )}
-          </div>
+          {recentTransactions.length > 0 ? (
+            <DataTable
+              rows={recentTransactions.slice(0, 10).map((txn, index) => ({
+                id: txn.txnId || `txn-${index}`,
+                txnId: txn.txnId || `TXN-${1000 + index}`,
+                amount: txn.amount || 0,
+                timestamp: txn.timestamp,
+                fraudScore: txn.fraudScore || 0,
+                decision: txn.fraudDecision || 'PENDING',
+              }))}
+              headers={[
+                { key: 'txnId', header: 'Transaction ID' },
+                { key: 'amount', header: 'Amount' },
+                { key: 'timestamp', header: 'Time' },
+                { key: 'fraudScore', header: 'Fraud Score' },
+                { key: 'decision', header: 'Decision' },
+              ]}
+            >
+              {({ rows, headers, getTableProps, getHeaderProps, getRowProps, getTableContainerProps }) => (
+                <TableContainer {...getTableContainerProps()}>
+                  <Table {...getTableProps()} size="md">
+                    <TableHead>
+                      <TableRow>
+                        {headers.map((header) => (
+                          <TableHeader key={header.key} {...getHeaderProps({ header })}>
+                            {header.header}
+                          </TableHeader>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          {...getRowProps({ row })}
+                          onClick={() => navigate(`/investigation/${row.cells[0].value}`)}
+                        >
+                          {row.cells.map((cell) => {
+                            if (cell.info.header === 'amount') {
+                              return (
+                                <TableCell key={cell.id}>
+                                  ${parseFloat(cell.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                              );
+                            }
+                            if (cell.info.header === 'timestamp') {
+                              return (
+                                <TableCell key={cell.id}>
+                                  {new Date(cell.value).toLocaleString()}
+                                </TableCell>
+                              );
+                            }
+                            if (cell.info.header === 'fraudScore') {
+                              const score = parseFloat(cell.value);
+                              return (
+                                <TableCell key={cell.id}>
+                                  <Tag type={score >= 70 ? 'red' : score >= 50 ? 'purple' : 'green'}>
+                                    {score.toFixed(1)}%
+                                  </Tag>
+                                </TableCell>
+                              );
+                            }
+                            if (cell.info.header === 'decision') {
+                              const decisionColors = {
+                                'APPROVE': 'green',
+                                'OTP': 'blue',
+                                'HOLD': 'purple',
+                                'BLOCK': 'red',
+                                'PENDING': 'gray'
+                              };
+                              return (
+                                <TableCell key={cell.id}>
+                                  <Tag type={decisionColors[cell.value] || 'gray'}>
+                                    {cell.value}
+                                  </Tag>
+                                </TableCell>
+                              );
+                            }
+                            return <TableCell key={cell.id}>{cell.value}</TableCell>;
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </DataTable>
+          ) : (
+            <div className="empty-state">
+              <Security size={48} />
+              <p>No recent transactions</p>
+            </div>
+          )}
         </PremiumCard>
 
-        <PremiumCard
-          title="Fraud Detection Agents"
-          subtitle="Real-time agent performance metrics"
-          variant="glow-purple"
-          hoverable
-        >
-          <div className="agents-list">
-            {[
-              { name: 'Risk Agent', score: 92, status: 'active' },
-              { name: 'Geo Agent', score: 88, status: 'active' },
-              { name: 'Device Agent', score: 95, status: 'active' },
-              { name: 'AML Agent', score: 90, status: 'active' },
-              { name: 'Behavior Agent', score: 85, status: 'active' },
-            ].map((agent, index) => (
-              <div key={index} className="agent-item">
-                <div className="agent-info">
-                  <span className="agent-name">{agent.name}</span>
-                  <StatusBadge status="ACTIVE" type="success" />
-                </div>
-                <div className="agent-score">
-                  <div className="score-bar">
-                    <div
-                      className="score-fill"
-                      style={{ width: `${agent.score}%` }}
-                    ></div>
-                  </div>
-                  <span className="score-value">{agent.score}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </PremiumCard>
-      </DashboardGrid>
-
-      {/* System Status */}
-      <DashboardGrid columns={1} gap="lg">
-        <PremiumCard
-          title="System Health"
-          subtitle="Real-time platform monitoring"
-          variant="glow-cyan"
-        >
-          <div className="system-status">
-            <div className="status-item">
-              <div className="status-indicator active"></div>
-              <span className="status-label">Kafka Stream</span>
-              <span className="status-value">Connected</span>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator active"></div>
-              <span className="status-label">Database</span>
-              <span className="status-value">Healthy</span>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator active"></div>
-              <span className="status-label">Fraud Agents</span>
-              <span className="status-value">5/5 Active</span>
-            </div>
-            <div className="status-item">
-              <div className="status-indicator active"></div>
-              <span className="status-label">API Gateway</span>
-              <span className="status-value">Operational</span>
-            </div>
-          </div>
-        </PremiumCard>
       </DashboardGrid>
     </div>
   );

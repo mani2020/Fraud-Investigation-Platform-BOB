@@ -33,6 +33,10 @@ export const API_ENDPOINTS = {
   // Analytics endpoints
   ANALYTICS: `${API_BASE_URL}/api/analytics`,
   ANALYTICS_FRAUD_BY_COUNTRY: `${API_BASE_URL}/api/analytics/fraud-by-country`,
+  
+  // Health check endpoints
+  HEALTH: `${API_BASE_URL}/api/health`,
+  HEALTH_PING: `${API_BASE_URL}/api/health/ping`,
 };
 
 // Export default axios configuration

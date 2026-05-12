@@ -13,7 +13,7 @@ import {
   Tag,
 } from '@carbon/react';
 import { View, Renew } from '@carbon/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
 import CustomPagination from '../common/CustomPagination';
@@ -38,6 +38,8 @@ const TransactionMonitor = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialFilter = location.state?.filter;
 
   useEffect(() => {
     fetchTransactions();
@@ -45,16 +47,49 @@ const TransactionMonitor = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Apply initial filter from navigation state
+  useEffect(() => {
+    if (initialFilter && transactions.length > 0) {
+      applyDecisionFilter(initialFilter);
+    }
+  }, [initialFilter, transactions]);
+
   const fetchTransactions = async () => {
     try {
       const response = await axios.get(API_ENDPOINTS.TRANSACTIONS);
       setTransactions(response.data);
-      setFilteredTransactions(response.data);
+      // Don't override filtered transactions if a filter is active
+      if (!initialFilter) {
+        setFilteredTransactions(response.data);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setLoading(false);
     }
+  };
+
+  const applyDecisionFilter = (filterType) => {
+    let filtered = [];
+    
+    switch(filterType) {
+      case 'APPROVE':
+        filtered = transactions.filter(txn => txn.fraudDecision === 'APPROVE');
+        break;
+      case 'FLAGGED':
+        filtered = transactions.filter(txn =>
+          txn.fraudDecision === 'OTP' || txn.fraudDecision === 'HOLD'
+        );
+        break;
+      case 'BLOCK':
+        filtered = transactions.filter(txn => txn.fraudDecision === 'BLOCK');
+        break;
+      default:
+        filtered = transactions;
+    }
+    
+    setFilteredTransactions(filtered);
+    setPage(1); // Reset to first page
   };
 
   const handleSearch = (e) => {

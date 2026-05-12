@@ -434,6 +434,9 @@ netstat -ano | findstr :8080
 - [Implementation Plan](docs/development/IMPLEMENTATION_PLAN.md) - 16-week detailed plan
 - [Hackathon Plan](docs/development/HACKATHON_PLAN.md) - 5-day sprint plan
 - [Code Review Summary](docs/development/CODE_REVIEW_SUMMARY.md) - Quality assurance results
+- [Dashboard Improvements](docs/development/DASHBOARD_IMPROVEMENTS.md) - UX enhancements and clickable navigation
+- [Fraud Alerts Fix](docs/development/FRAUD_ALERTS_FIX.md) - Alert creation and display fixes
+- [Health Monitoring](docs/development/HEALTH_MONITORING_IMPLEMENTATION.md) - System health check implementation
 - [Problems Explained](docs/development/PROBLEMS_TAB_EXPLANATION.md) - Common issues and solutions
 - [Prompts Used](docs/development/PROMPTS.md) - All Bob prompts for building this platform
 
