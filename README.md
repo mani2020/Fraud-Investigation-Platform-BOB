@@ -113,39 +113,31 @@ The frontend will start on `http://localhost:5174`
 ### Transaction API
 ```
 POST   /api/transactions              # Submit transaction for fraud check
-GET    /api/transactions/{id}         # Get transaction details
-GET    /api/transactions              # List transactions
+GET    /api/transactions/{txnId}      # Get transaction details
+GET    /api/transactions              # List all transactions
+GET    /api/transactions/customer/{customerId}  # Get customer transactions
 ```
 
 ### Fraud Alert API
 ```
-GET    /api/alerts                    # Get all recent alerts
-GET    /api/alerts/critical           # Get critical alerts only
-GET    /api/alerts/unacknowledged     # Get unacknowledged alerts
-GET    /api/alerts/{alertId}          # Get alert by ID
-PUT    /api/alerts/{alertId}/acknowledge  # Acknowledge alert
-GET    /api/alerts/stats              # Get alert statistics
+GET    /api/fraud-alerts              # Get all recent alerts
+GET    /api/fraud-alerts/critical     # Get critical alerts only
+GET    /api/fraud-alerts/unacknowledged  # Get unacknowledged alerts
+GET    /api/fraud-alerts/{alertId}    # Get alert by ID
+PUT    /api/fraud-alerts/{alertId}/acknowledge  # Acknowledge alert
+GET    /api/fraud-alerts/stats        # Get alert statistics
+GET    /api/fraud-alerts/severity/{severity}  # Get alerts by severity
 ```
 
-### Case Management API
+### Investigation API
 ```
-GET    /api/cases                     # List fraud cases
-GET    /api/cases/{id}                # Get case details
-PUT    /api/cases/{id}/assign         # Assign case to analyst
-PUT    /api/cases/{id}/resolve        # Resolve case
-POST   /api/cases/{id}/notes          # Add note to case
+GET    /api/investigation/{txnId}     # Get detailed investigation data with agent results
 ```
 
-### Dashboard API
+### Health Check API
 ```
-GET    /api/dashboard/metrics         # Real-time metrics
-GET    /api/dashboard/alerts          # Recent alerts
-GET    /api/dashboard/trends          # Fraud trends
-```
-
-### WebSocket
-```
-ws://localhost:8080/ws/fraud-alerts   # Real-time fraud alerts
+GET    /api/health                    # Get system health status
+GET    /api/health/ping               # Simple health ping
 ```
 
 ## Configuration
