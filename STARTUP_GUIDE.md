@@ -21,7 +21,7 @@ Open a terminal and run:
 cd "c:\Users\ManikandanP\OneDrive - IBM\BOB Projects\fraud-investigation-platform"
 
 # Start backend with H2 in-memory database
-mvn spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=h2"
+mvn spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=h2" "-Dspring-boot.run.jvmArguments=-Duser.timezone=UTC"
 ```
 
 **Expected Output:**

@@ -89,8 +89,8 @@ docker-compose -f docker-compose-dev.yml ps
 # Build the application
 mvn clean install
 
-# Run Spring Boot application
-mvn spring-boot:run
+# Run Spring Boot application with proper timezone and profile
+mvn spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=default" "-Dspring-boot.run.jvmArguments=-Duser.timezone=UTC"
 
 # Or run the JAR
 java -jar target/fraud-investigation-platform-1.0.0-SNAPSHOT.jar
