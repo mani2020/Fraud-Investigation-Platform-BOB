@@ -47,22 +47,17 @@ const FraudAlerts = () => {
 
   const fetchAlerts = async () => {
     try {
-      // Fetch all transactions and filter high-risk ones
-      const response = await axios.get(API_ENDPOINTS.TRANSACTIONS);
-      const transactions = response.data;
-      
-      // Filter transactions with fraud score >= 0.5 (high risk)
-      const highRiskTransactions = transactions.filter(txn =>
-        txn.fraudScore && parseFloat(txn.fraudScore) >= 0.5
-      );
+      // Fetch fraud alerts from dedicated endpoint
+      const response = await axios.get(API_ENDPOINTS.FRAUD_ALERTS);
+      const fraudAlerts = response.data;
       
       // Sort by fraud score descending
-      highRiskTransactions.sort((a, b) =>
-        parseFloat(b.fraudScore) - parseFloat(a.fraudScore)
+      fraudAlerts.sort((a, b) =>
+        parseFloat(b.fraudScore || 0) - parseFloat(a.fraudScore || 0)
       );
       
-      setAlerts(highRiskTransactions);
-      setFilteredAlerts(highRiskTransactions);
+      setAlerts(fraudAlerts);
+      setFilteredAlerts(fraudAlerts);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching alerts:', error);
@@ -91,10 +86,11 @@ const FraudAlerts = () => {
   };
 
   const calculateSeverity = (fraudScore) => {
+    // Backend sends scores as 0-100, not 0-1
     const score = parseFloat(fraudScore);
-    if (score >= 0.8) return 'CRITICAL';
-    if (score >= 0.7) return 'HIGH';
-    if (score >= 0.5) return 'MEDIUM';
+    if (score >= 80) return 'CRITICAL';
+    if (score >= 70) return 'HIGH';
+    if (score >= 50) return 'MEDIUM';
     return 'LOW';
   };
 
@@ -143,7 +139,7 @@ const FraudAlerts = () => {
     customerId: alert.customerId,
     amount: `$${parseFloat(alert.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     timestamp: new Date(alert.timestamp).toLocaleString(),
-    fraudScore: (parseFloat(alert.fraudScore) * 100).toFixed(1) + '%',
+    fraudScore: parseFloat(alert.fraudScore).toFixed(1) + '%',
     severity: getSeverityTag(alert.fraudScore),
     status: getStatusTag(alert.status),
     actions: (

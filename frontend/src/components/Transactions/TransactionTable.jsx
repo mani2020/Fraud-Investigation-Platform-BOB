@@ -73,7 +73,8 @@ const TransactionTable = ({ transactions, onRowClick }) => {
 
   // Get fraud score color
   const getFraudScoreColor = (score) => {
-    const numScore = typeof score === 'number' ? score * 100 : score;
+    // Backend sends scores as 0-100, not 0-1, so no multiplication needed
+    const numScore = typeof score === 'number' ? score : parseFloat(score);
     if (numScore >= 70) return 'danger';
     if (numScore >= 50) return 'warning';
     if (numScore >= 30) return 'info';
@@ -82,7 +83,8 @@ const TransactionTable = ({ transactions, onRowClick }) => {
 
   // Get fraud score status
   const getFraudScoreStatus = (score) => {
-    const numScore = typeof score === 'number' ? score * 100 : score;
+    // Backend sends scores as 0-100, not 0-1, so no multiplication needed
+    const numScore = typeof score === 'number' ? score : parseFloat(score);
     if (numScore >= 70) return 'CRITICAL';
     if (numScore >= 50) return 'HIGH';
     if (numScore >= 30) return 'MEDIUM';

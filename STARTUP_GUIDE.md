@@ -89,7 +89,7 @@ docker-compose -f docker-compose-dev.yml ps
 
 ```powershell
 # Start backend with PostgreSQL and Kafka
-mvn spring-boot:run
+mvn spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=default" "-Dspring-boot.run.jvmArguments=-Duser.timezone=UTC"
 ```
 
 **Backend will be available at:** `http://localhost:8080`
@@ -267,6 +267,37 @@ Press `Ctrl + C` in the backend terminal
 ```powershell
 docker-compose -f docker-compose-dev.yml down
 ```
+
+---
+
+## Database Management
+
+### Reset Sample Data
+
+If you need to reset the database and reload sample data:
+
+**Option 1: Using PowerShell Script (Recommended)**
+```powershell
+# Run the automated reset script
+.\scripts\reset-database.ps1
+```
+
+**Option 2: Manual Docker Command**
+```powershell
+docker exec -it fraud-postgres psql -U fraud -d frauddb -c "DELETE FROM fraud_audit_logs; DELETE FROM fraud_alerts; DELETE FROM transactions; DELETE FROM trusted_devices; DELETE FROM customer_profiles;"
+```
+
+**Option 3: Using SQL Script**
+```powershell
+# Connect to PostgreSQL and run the SQL script
+docker exec -it fraud-postgres psql -U fraud -d frauddb -f /path/to/reset_sample_data.sql
+```
+
+**After Reset:**
+1. Restart Spring Boot application
+2. DataInitializer will detect empty database (count = 0)
+3. 20 new sample transactions will be created automatically
+4. All transactions will be processed through Kafka fraud detection flow
 
 ---
 

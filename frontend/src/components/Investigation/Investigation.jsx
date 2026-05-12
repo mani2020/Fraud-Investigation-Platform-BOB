@@ -82,7 +82,7 @@ const Investigation = () => {
   const gaugeData = [
     {
       group: 'value',
-      value: fraudScoreValue * 100,
+      value: fraudScoreValue,
     },
   ];
 
@@ -92,7 +92,7 @@ const Investigation = () => {
     height: '250px',
     gauge: {
       type: 'semi',
-      status: fraudScoreValue >= 0.8 ? 'danger' : fraudScoreValue >= 0.5 ? 'warning' : 'success',
+      status: fraudScoreValue >= 80 ? 'danger' : fraudScoreValue >= 50 ? 'warning' : 'success',
     },
     toolbar: {
       enabled: false,
@@ -121,8 +121,8 @@ const Investigation = () => {
       id: '9',
       field: 'Fraud Score',
       value: (
-        <Tag type={fraudScoreValue >= 0.8 ? 'red' : fraudScoreValue >= 0.5 ? 'purple' : 'green'}>
-          {(fraudScoreValue * 100).toFixed(1)}%
+        <Tag type={fraudScoreValue >= 80 ? 'red' : fraudScoreValue >= 50 ? 'purple' : 'green'}>
+          {fraudScoreValue.toFixed(1)}%
         </Tag>
       )
     },
@@ -163,8 +163,8 @@ const Investigation = () => {
       id: `agent-${index}`,
       agentName: result.agentName,
       score: (
-        <Tag type={scoreValue >= 0.7 ? 'red' : scoreValue >= 0.4 ? 'purple' : 'green'}>
-          {(scoreValue * 100).toFixed(0)}%
+        <Tag type={scoreValue >= 70 ? 'red' : scoreValue >= 40 ? 'purple' : 'green'}>
+          {scoreValue.toFixed(0)}%
         </Tag>
       ),
       reason: reasonText,

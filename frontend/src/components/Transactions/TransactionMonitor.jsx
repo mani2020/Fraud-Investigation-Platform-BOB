@@ -88,10 +88,12 @@ const TransactionMonitor = () => {
   };
 
   const getFraudScoreTag = (score) => {
-    if (score >= 0.8) return <Tag type="red">{(score * 100).toFixed(0)}%</Tag>;
-    if (score >= 0.5) return <Tag type="orange">{(score * 100).toFixed(0)}%</Tag>;
-    if (score >= 0.3) return <Tag type="yellow">{(score * 100).toFixed(0)}%</Tag>;
-    return <Tag type="green">{(score * 100).toFixed(0)}%</Tag>;
+    // Backend sends scores as 0-100, not 0-1, so no multiplication needed
+    const numScore = typeof score === 'number' ? score : parseFloat(score);
+    if (numScore >= 80) return <Tag type="red">{numScore.toFixed(0)}%</Tag>;
+    if (numScore >= 50) return <Tag type="orange">{numScore.toFixed(0)}%</Tag>;
+    if (numScore >= 30) return <Tag type="yellow">{numScore.toFixed(0)}%</Tag>;
+    return <Tag type="green">{numScore.toFixed(0)}%</Tag>;
   };
 
   const rows = filteredTransactions.map((txn) => ({

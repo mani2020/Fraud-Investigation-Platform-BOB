@@ -195,11 +195,12 @@ public class FraudNotificationService {
         BigDecimal score = decision.getFinalScore();
         String decisionType = decision.getDecision();
 
-        if ("REJECT".equals(decisionType) || score.compareTo(BigDecimal.valueOf(70)) >= 0) {
+        // Map decision types to severity levels
+        if ("BLOCK".equals(decisionType) || score.compareTo(BigDecimal.valueOf(85)) >= 0) {
             return FraudAlert.Severity.CRITICAL;
-        } else if ("REVIEW".equals(decisionType) || score.compareTo(BigDecimal.valueOf(50)) >= 0) {
+        } else if ("HOLD".equals(decisionType) || score.compareTo(BigDecimal.valueOf(70)) >= 0) {
             return FraudAlert.Severity.HIGH;
-        } else if (score.compareTo(BigDecimal.valueOf(30)) >= 0) {
+        } else if ("OTP".equals(decisionType) || score.compareTo(BigDecimal.valueOf(50)) >= 0) {
             return FraudAlert.Severity.MEDIUM;
         } else {
             return FraudAlert.Severity.LOW;
@@ -232,8 +233,8 @@ public class FraudNotificationService {
             }
         }
 
-        return "REJECT".equals(decision.getDecision()) ? 
-               FraudAlert.AlertType.FRAUD_DETECTED : 
+        return "BLOCK".equals(decision.getDecision()) ?
+               FraudAlert.AlertType.FRAUD_DETECTED :
                FraudAlert.AlertType.SUSPICIOUS_ACTIVITY;
     }
 
@@ -245,9 +246,10 @@ public class FraudNotificationService {
         BigDecimal score = decision.getFinalScore();
 
         return switch (decisionType) {
-            case "REJECT" -> String.format("Fraud detected - Score: %.1f", score);
-            case "REVIEW" -> String.format("Suspicious activity - Score: %.1f", score);
-            default -> String.format("Transaction flagged - Score: %.1f", score);
+            case "BLOCK" -> String.format("Transaction blocked - Fraud detected (Score: %.1f%%)", score);
+            case "HOLD" -> String.format("Transaction on hold - High risk (Score: %.1f%%)", score);
+            case "OTP" -> String.format("OTP required - Suspicious activity (Score: %.1f%%)", score);
+            default -> String.format("Transaction flagged - Score: %.1f%%", score);
         };
     }
 

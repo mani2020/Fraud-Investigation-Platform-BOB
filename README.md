@@ -342,6 +342,45 @@ docker exec -it fraud-postgres psql -U fraud -d frauddb
 SELECT * FROM transactions LIMIT 10;
 ```
 
+## Database Management
+
+### Reset Sample Data
+
+To reset the database and reload sample data, use one of these methods:
+
+#### Option 1: PowerShell Script (Recommended for Windows)
+```powershell
+# Run the automated reset script
+.\scripts\reset-database.ps1
+```
+
+This script will:
+- Check if Docker and PostgreSQL container are running
+- Prompt for confirmation before deleting data
+- Execute DELETE commands in correct order
+- Verify deletion with a count query
+- Provide next steps for restarting the application
+
+#### Option 2: Manual Docker Command
+```bash
+# Delete all data from database
+docker exec -it fraud-postgres psql -U fraud -d frauddb -c "DELETE FROM fraud_audit_logs; DELETE FROM fraud_alerts; DELETE FROM transactions; DELETE FROM trusted_devices; DELETE FROM customer_profiles;"
+```
+
+#### Option 3: SQL Script
+```bash
+# Using the provided SQL script
+docker exec -it fraud-postgres psql -U fraud -d frauddb -f src/main/resources/db/reset_sample_data.sql
+```
+
+#### After Reset
+1. Restart Spring Boot application: `mvn spring-boot:run`
+2. [`DataInitializer`](src/main/java/com/fraud/platform/config/DataInitializer.java) will detect empty database
+3. 20 new sample transactions will be created automatically
+4. All transactions will be processed through Kafka fraud detection flow
+
+**Note:** The DataInitializer only creates sample data when `transactionRepository.count() == 0`, so deleting all transactions triggers automatic repopulation on restart.
+
 ## Troubleshooting
 
 ### Kafka Connection Issues

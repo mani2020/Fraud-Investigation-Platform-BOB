@@ -93,6 +93,11 @@ public class DeviceAgent implements FraudAgent {
                     transaction.getDeviceId(), e.getMessage());
         }
 
+        // Cap risk score at 100
+        if (riskScore.compareTo(BigDecimal.valueOf(100)) > 0) {
+            riskScore = BigDecimal.valueOf(100);
+        }
+
         // Determine decision
         String decision;
         if (riskScore.compareTo(BigDecimal.valueOf(60)) >= 0) {

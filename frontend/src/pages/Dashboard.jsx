@@ -60,7 +60,7 @@ const Dashboard = () => {
         approvedTransactions: approved,
         flaggedTransactions: flagged,
         blockedTransactions: blocked,
-        avgFraudScore: avgScore * 100, // Convert to percentage
+        avgFraudScore: avgScore, // Backend already sends 0-100, no multiplication needed
         activeAlerts: alerts.filter(a => a.status === 'OPEN').length,
       });
 
@@ -159,8 +159,8 @@ const Dashboard = () => {
                       {new Date(txn.timestamp || Date.now()).toLocaleTimeString()}
                     </span>
                     <StatusBadge
-                      status={getFraudScoreStatus(txn.fraudScore * 100 || Math.random() * 100)}
-                      type={getFraudScoreColor(txn.fraudScore * 100 || Math.random() * 100)}
+                      status={getFraudScoreStatus(txn.fraudScore || Math.random() * 100)}
+                      type={getFraudScoreColor(txn.fraudScore || Math.random() * 100)}
                       glow
                     />
                   </div>

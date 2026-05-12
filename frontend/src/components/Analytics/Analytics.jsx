@@ -27,9 +27,17 @@ const Analytics = () => {
         const transactions = transactionsRes.data;
         
         // Calculate analytics from transactions
-        const approved = transactions.filter(t => t.status === 'APPROVED').length;
-        const flagged = transactions.filter(t => t.status === 'FLAGGED').length;
-        const pending = transactions.filter(t => t.status === 'PENDING' || t.status === 'REVIEW').length;
+        // Backend uses: PENDING, PROCESSING, PROCESSED
+        // Fraud decisions: APPROVE, OTP, HOLD, BLOCK
+        const approved = transactions.filter(t =>
+          t.fraudDecision === 'APPROVE' || t.status === 'PROCESSED'
+        ).length;
+        const flagged = transactions.filter(t =>
+          t.fraudDecision === 'HOLD' || t.fraudDecision === 'BLOCK'
+        ).length;
+        const pending = transactions.filter(t =>
+          t.status === 'PENDING' || t.status === 'PROCESSING' || t.fraudDecision === 'OTP'
+        ).length;
         
         // Group by date for trend
         const trendMap = {};
@@ -38,7 +46,8 @@ const Analytics = () => {
           if (!trendMap[date]) {
             trendMap[date] = { sum: 0, count: 0 };
           }
-          trendMap[date].sum += (t.fraudScore || 0) * 100;
+          // Backend already sends scores as 0-100, no multiplication needed
+          trendMap[date].sum += (t.fraudScore || 0);
           trendMap[date].count++;
         });
         

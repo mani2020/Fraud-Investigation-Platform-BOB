@@ -181,6 +181,14 @@ public class FraudOrchestratorService {
 
         // Calculate final score (weighted average)
         BigDecimal finalScore = totalWeightedScore.divide(totalWeight, 2, RoundingMode.HALF_UP);
+        
+        // Cap final score at 100 to prevent scores exceeding 100%
+        if (finalScore.compareTo(BigDecimal.valueOf(100)) > 0) {
+            log.warn("Final fraud score {} exceeded 100, capping at 100 for transaction: {}",
+                    finalScore, txnId);
+            finalScore = BigDecimal.valueOf(100);
+        }
+        
         decision.setFinalScore(finalScore);
 
         // Calculate average confidence
@@ -272,11 +280,16 @@ public class FraudOrchestratorService {
      */
     private void createFraudAlert(FraudDecision decision) {
         try {
-            // Only create alerts for REVIEW and REJECT decisions
-            if ("REVIEW".equals(decision.getDecision()) || "REJECT".equals(decision.getDecision())) {
+            // Create alerts for HOLD and BLOCK decisions (high-risk transactions)
+            // Also create alerts for OTP if score is high enough
+            String decisionType = decision.getDecision();
+            BigDecimal score = decision.getFinalScore();
+            
+            if ("BLOCK".equals(decisionType) || "HOLD".equals(decisionType) ||
+                ("OTP".equals(decisionType) && score.compareTo(BigDecimal.valueOf(50)) >= 0)) {
                 FraudAlert alert = notificationService.createAlert(decision);
-                log.info("Fraud alert created: alertId={}, severity={}, txnId={}",
-                         alert.getAlertId(), alert.getSeverity(), decision.getTxnId());
+                log.info("Fraud alert created: alertId={}, severity={}, decision={}, txnId={}",
+                         alert.getAlertId(), alert.getSeverity(), decisionType, decision.getTxnId());
             }
         } catch (Exception e) {
             log.error("Failed to create fraud alert for transaction: {}", decision.getTxnId(), e);

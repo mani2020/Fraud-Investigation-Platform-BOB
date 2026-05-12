@@ -121,10 +121,11 @@ fraud:
       deviation-threshold: 3.0
   
   decision:
-    auto-approve-threshold: 30
-    review-threshold: 70
-    block-threshold: 90
-  
+    approve-threshold: 30
+    otp-threshold: 50
+    hold-threshold: 70
+    block-threshold: 85
+      
   orchestrator:
     timeout-seconds: 5
     parallel-execution: true
