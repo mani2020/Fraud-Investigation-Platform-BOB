@@ -1,4 +1,4 @@
-# Fraud Investigation Platform - Startup Guide
+# Enterprise AI-Powered Agentic Fraud Investigation Platform - Startup Guide
 
 ## Quick Start Instructions
 

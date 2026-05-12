@@ -1,6 +1,6 @@
-# Fraud Investigation Platform
+# Enterprise AI-Powered Agentic Fraud Investigation Platform
 
-Enterprise-grade real-time fraud investigation platform for banking payments built as a hackathon-optimized modular monolith.
+Enterprise-grade real-time fraud investigation platform for banking payments built as a hackathon-optimized modular monolith with AI-powered fraud detection agents.
 
 ## Overview
 

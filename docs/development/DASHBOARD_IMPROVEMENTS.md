@@ -1,4 +1,5 @@
 # Dashboard Improvements - May 12, 2026
+## Enterprise AI-Powered Agentic Fraud Investigation Platform
 
 ## Overview
 This document summarizes all improvements made to the Dashboard and related components to enhance user experience and system credibility.

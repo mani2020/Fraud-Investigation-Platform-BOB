@@ -3,7 +3,7 @@
 This file provides guidance to agents when working with code in this repository.
 
 ## Project Overview
-Enterprise-grade real-time fraud investigation platform for banking payments.
+Enterprise AI-Powered Agentic Fraud Investigation Platform - Enterprise-grade real-time fraud investigation platform for banking payments with AI-powered fraud detection agents.
 
 ## Technology Stack
 - **Backend**: Java 17, Spring Boot
