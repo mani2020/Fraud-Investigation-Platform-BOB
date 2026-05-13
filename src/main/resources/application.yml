@@ -39,10 +39,14 @@ spring:
     consumer:
       group-id: fraud-platform-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
+        "spring.deserializer.key.delegate.class": org.apache.kafka.common.serialization.StringDeserializer
+        "spring.deserializer.value.delegate.class": org.springframework.kafka.support.serializer.JsonDeserializer
         "spring.json.trusted.packages": "*"
+        "spring.json.value.default.type": com.fraud.platform.kafka.events.TransactionEvent
+        "spring.json.use.type.headers": false
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -50,6 +54,9 @@ spring:
       retries: 3
     listener:
       ack-mode: manual
+      retry:
+        fixed-backoff-ms: 1000
+        max-attempts: 3
   
   cache:
     type: caffeine
@@ -136,5 +143,7 @@ kafka:
     fraud-transactions: fraud-transactions
     fraud-results: fraud-results
     fraud-alerts: fraud-alerts
+    fraud-transactions-dlq: fraud-transactions-dlq
+    fraud-invalid-events: fraud-invalid-events
     partitions: 3
     replication-factor: 1

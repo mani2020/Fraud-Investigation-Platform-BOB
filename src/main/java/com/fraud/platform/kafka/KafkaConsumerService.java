@@ -11,6 +11,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * Kafka consumer service for fraud orchestration.
@@ -25,7 +26,8 @@ public class KafkaConsumerService {
 
     /**
      * Consume transaction events from fraud-transactions topic.
-     * This is the entry point for fraud detection orchestration.
+     * Valid events are retried by the listener error handler on processing failures
+     * and routed to the business DLQ after retries are exhausted.
      *
      * @param event Transaction event
      * @param partition Kafka partition
@@ -43,26 +45,42 @@ public class KafkaConsumerService {
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment) {
 
+        validateEvent(event);
+
         log.info("Received transaction event: txnId={}, customerId={}, amount={}, partition={}, offset={}",
                  event.getTxnId(), event.getCustomerId(), event.getAmount(), partition, offset);
 
         try {
-            // Log transaction details
             logTransactionDetails(event);
-            
-            // Trigger fraud detection orchestration
+
             FraudDecision decision = fraudOrchestratorService.analyzeTransaction(event);
-            
+
             log.info("Fraud analysis completed: txnId={}, decision={}, score={}",
                      event.getTxnId(), decision.getDecision(), decision.getFinalScore());
-            
-            // Manually acknowledge the message
+
             acknowledgment.acknowledge();
-            
+
         } catch (Exception e) {
             log.error("Error processing transaction event: txnId={}", event.getTxnId(), e);
-            // Don't acknowledge - message will be reprocessed
-            throw new RuntimeException("Failed to process transaction event", e);
+            throw new RuntimeException("Failed to process transaction event for txnId=" + event.getTxnId(), e);
+        }
+    }
+
+    private void validateEvent(TransactionEvent event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Transaction event payload is null");
+        }
+        if (!StringUtils.hasText(event.getTxnId())) {
+            throw new IllegalArgumentException("Transaction event txnId is missing");
+        }
+        if (!StringUtils.hasText(event.getCustomerId())) {
+            throw new IllegalArgumentException("Transaction event customerId is missing");
+        }
+        if (event.getAmount() == null) {
+            throw new IllegalArgumentException("Transaction event amount is missing");
+        }
+        if (event.getTimestamp() == null) {
+            throw new IllegalArgumentException("Transaction event timestamp is missing");
         }
     }
 
