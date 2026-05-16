@@ -1,7 +1,7 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,8 @@ import java.util.List;
 
 /**
  * Geo-location fraud detection agent.
- * Analyzes transaction country and location patterns with trusted country whitelist.
+ * Analyzes transaction country, location patterns, VPN detection, and location mismatches.
+ * Leverages nested location data and fraud signals for enhanced detection.
  */
 @Component
 @Slf4j
@@ -37,38 +38,88 @@ public class GeoAgent implements FraudAgent {
     );
 
     @Override
-    public AgentResult analyze(TransactionEvent transaction) {
+    public AgentResult analyze(CanonicalFraudEvent event) {
         long startTime = System.currentTimeMillis();
-        log.debug("GeoAgent analyzing transaction: {}", transaction.getTxnId());
+        log.debug("GeoAgent analyzing event: {}", event.getTxnId());
 
         BigDecimal riskScore = BigDecimal.ZERO;
         List<String> reasons = new ArrayList<>();
 
-        String country = transaction.getCountry().toUpperCase();
+        // Use helper method for safe access to country
+        String country = event.getCountry();
+        
+        if (country != null) {
+            final String countryUpper = country.toUpperCase();
 
-        // Check if country is in trusted list
-        boolean isTrustedCountry = TRUSTED_COUNTRIES.stream()
-                .anyMatch(trusted -> country.contains(trusted) || trusted.contains(country));
+            // Check if country is in trusted list
+            boolean isTrustedCountry = TRUSTED_COUNTRIES.stream()
+                    .anyMatch(trusted -> countryUpper.contains(trusted) || trusted.contains(countryUpper));
 
-        // Check high-risk countries
-        if (HIGH_RISK_COUNTRIES.contains(country)) {
-            riskScore = riskScore.add(BigDecimal.valueOf(50));
-            reasons.add("Transaction from high-risk country: " + country);
-        }
-        // Check medium-risk countries
-        else if (MEDIUM_RISK_COUNTRIES.contains(country)) {
-            riskScore = riskScore.add(BigDecimal.valueOf(25));
-            reasons.add("Transaction from medium-risk country: " + country);
-        }
-        // Check if country is NOT in trusted list (untrusted/unknown country)
-        else if (!isTrustedCountry) {
-            riskScore = riskScore.add(BigDecimal.valueOf(30));
-            reasons.add("Transaction from untrusted/unknown country: " + country);
+            // Check high-risk countries
+            if (HIGH_RISK_COUNTRIES.contains(countryUpper)) {
+                riskScore = riskScore.add(BigDecimal.valueOf(50));
+                reasons.add("Transaction from high-risk country: " + countryUpper);
+            }
+            // Check medium-risk countries
+            else if (MEDIUM_RISK_COUNTRIES.contains(countryUpper)) {
+                riskScore = riskScore.add(BigDecimal.valueOf(25));
+                reasons.add("Transaction from medium-risk country: " + country);
+            }
+            // Check if country is NOT in trusted list (untrusted/unknown country)
+            else if (!isTrustedCountry) {
+                riskScore = riskScore.add(BigDecimal.valueOf(30));
+                reasons.add("Transaction from untrusted/unknown country: " + country);
+            }
         }
 
-        // TODO: Add velocity checks - multiple countries in short time
-        // TODO: Add impossible travel detection
-        // TODO: Add IP geolocation mismatch detection
+        // Check nested location data for additional context
+        if (event.getLocation() != null) {
+            String city = event.getLocation().getCity();
+            String region = event.getLocation().getRegion();
+            
+            if (city != null) {
+                log.debug("Transaction from city: {}", city);
+            }
+            if (region != null) {
+                log.debug("Transaction from region: {}", region);
+            }
+        }
+
+        // Check fraud signals for VPN detection
+        if (event.getFraudSignals() != null) {
+            if (Boolean.TRUE.equals(event.getFraudSignals().getVpnDetected())) {
+                riskScore = riskScore.add(BigDecimal.valueOf(30));
+                reasons.add("VPN detected");
+            }
+            
+            if (Boolean.TRUE.equals(event.getFraudSignals().getLocationMismatch())) {
+                riskScore = riskScore.add(BigDecimal.valueOf(35));
+                reasons.add("Location mismatch detected");
+            }
+        }
+
+        // Check device data for VPN/proxy indicators
+        if (event.getDevice() != null) {
+            if (Boolean.TRUE.equals(event.getDevice().getVpnDetected())) {
+                riskScore = riskScore.add(BigDecimal.valueOf(25));
+                reasons.add("VPN detected from device data");
+            }
+            
+            if (Boolean.TRUE.equals(event.getDevice().getProxyDetected())) {
+                riskScore = riskScore.add(BigDecimal.valueOf(25));
+                reasons.add("Proxy detected");
+            }
+            
+            // Check IP address for additional risk scoring
+            String ipAddress = event.getDevice().getIpAddress();
+            if (ipAddress != null) {
+                // Check for suspicious IP patterns (e.g., Tor exit nodes, known VPN ranges)
+                if (ipAddress.startsWith("10.") || ipAddress.startsWith("192.168.")) {
+                    riskScore = riskScore.add(BigDecimal.valueOf(15));
+                    reasons.add("Private IP address detected: " + ipAddress);
+                }
+            }
+        }
 
         // Cap risk score at 100
         if (riskScore.compareTo(BigDecimal.valueOf(100)) > 0) {
@@ -96,7 +147,8 @@ public class GeoAgent implements FraudAgent {
                 .processingTimeMs(processingTime)
                 .build();
 
-        log.debug("GeoAgent completed: score={}, decision={}", riskScore, decision);
+        log.info("GeoAgent completed for txn {}: score={}, decision={}, reasons={}",
+                event.getTxnId(), riskScore, decision, reasons.size());
         return result;
     }
 

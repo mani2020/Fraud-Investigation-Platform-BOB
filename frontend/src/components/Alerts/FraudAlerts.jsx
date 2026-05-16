@@ -51,13 +51,16 @@ const FraudAlerts = () => {
       const response = await axios.get(API_ENDPOINTS.FRAUD_ALERTS);
       const fraudAlerts = response.data;
       
+      // Filter for unacknowledged alerts only (to match notification badge)
+      const activeAlerts = fraudAlerts.filter(alert => !alert.acknowledged);
+      
       // Sort by fraud score descending
-      fraudAlerts.sort((a, b) =>
+      activeAlerts.sort((a, b) =>
         parseFloat(b.fraudScore || 0) - parseFloat(a.fraudScore || 0)
       );
       
-      setAlerts(fraudAlerts);
-      setFilteredAlerts(fraudAlerts);
+      setAlerts(activeAlerts);
+      setFilteredAlerts(activeAlerts);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching alerts:', error);

@@ -3,7 +3,7 @@ spring:
     name: fraud-investigation-platform
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/frauddb
+    url: jdbc:postgresql://localhost:5432/frauddb?serverTimezone=UTC
     username: fraud
     password: fraud123
     driver-class-name: org.postgresql.Driver
@@ -137,13 +137,37 @@ fraud:
     timeout-seconds: 5
     parallel-execution: true
 
-# Kafka Topics
+# Kafka Topics Configuration
 kafka:
   topics:
+    # Main transaction topic (supports both v1 and v2 formats)
     fraud-transactions: fraud-transactions
+    
+    # Optional: Separate v2 topic (if using dual-topic approach)
+    # fraud-transactions-v2: fraud-transactions-v2
+    
+    # Result and alert topics
     fraud-results: fraud-results
     fraud-alerts: fraud-alerts
+    
+    # Dead letter queue topics
     fraud-transactions-dlq: fraud-transactions-dlq
     fraud-invalid-events: fraud-invalid-events
+    
+    # Topic configuration
     partitions: 3
     replication-factor: 1
+  
+  # Version-aware deserialization configuration
+  consumer:
+    # Enable schema version detection (automatic via FraudEventDeserializer)
+    schema-version-detection: true
+    
+    # Default schema version for backward compatibility
+    # v1: Legacy flat format (TransactionEvent)
+    # v2: Nested format (CanonicalFraudEvent)
+    default-schema-version: v1
+    
+    # Version-specific consumer groups
+    # v1 consumers use: fraud-platform-group
+    # v2 consumers use: fraud-platform-group-v2

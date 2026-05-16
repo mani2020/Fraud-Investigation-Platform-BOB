@@ -3,6 +3,19 @@
 # ============================================================================
 # Purpose: Delete all sample data and allow DataInitializer to repopulate
 # Usage: .\scripts\reset-database.ps1
+#
+# Database Schema: Includes migrations V1-V7
+#   V1: transactions table (base schema)
+#   V2: fraud_alerts table
+#   V3: customer_profiles table
+#   V4: trusted_devices table
+#   V5: fraud_audit_logs table
+#   V6: (if exists)
+#   V7: JSONB columns for nested fraud data (customer_data, merchant_data,
+#       device_data, location_data, behavior_metrics, fraud_signals, metadata)
+#
+# Note: Flyway migrations run automatically on Spring Boot startup.
+#       This script only deletes data, not schema.
 # ============================================================================
 
 Write-Host "========================================" -ForegroundColor Cyan

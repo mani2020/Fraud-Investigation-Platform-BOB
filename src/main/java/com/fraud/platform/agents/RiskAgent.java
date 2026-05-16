@@ -1,7 +1,8 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.model.nested.MerchantInfo;
 import com.fraud.platform.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,8 @@ import java.util.List;
 
 /**
  * Risk-based fraud detection agent.
- * Analyzes transaction amount, merchant risk, payment type, and customer history.
+ * Analyzes transaction amount, merchant risk, payment type, customer history, and fraud signals.
+ * Leverages nested data structure for enhanced fraud detection.
  */
 @Component
 @Slf4j
@@ -42,69 +44,130 @@ public class RiskAgent implements FraudAgent {
     );
 
     @Override
-    public AgentResult analyze(TransactionEvent transaction) {
+    public AgentResult analyze(CanonicalFraudEvent event) {
         long startTime = System.currentTimeMillis();
-        log.debug("RiskAgent analyzing transaction: {}", transaction.getTxnId());
+        log.debug("RiskAgent analyzing event: {}", event.getTxnId());
 
         BigDecimal riskScore = BigDecimal.ZERO;
         List<String> reasons = new ArrayList<>();
 
-        // Check transaction amount
-        if (transaction.getAmount().compareTo(highValueThreshold) >= 0) {
-            riskScore = riskScore.add(BigDecimal.valueOf(40));
-            reasons.add("High-value transaction: " + transaction.getAmount());
-        } else if (transaction.getAmount().compareTo(suspiciousValueThreshold) >= 0) {
-            riskScore = riskScore.add(BigDecimal.valueOf(20));
-            reasons.add("Suspicious transaction amount: " + transaction.getAmount());
-        }
+        // Use helper methods for safe access to nested data
+        BigDecimal amount = event.getAmount();
+        String customerId = event.getCustomerId();
+        LocalDateTime timestamp = event.getTimestamp();
 
-        // Check merchant risk
-        String merchant = transaction.getMerchant().toUpperCase();
-        for (String riskMerchant : HIGH_RISK_MERCHANTS) {
-            if (merchant.contains(riskMerchant)) {
-                riskScore = riskScore.add(BigDecimal.valueOf(30));
-                reasons.add("High-risk merchant category: " + riskMerchant);
-                break;
+        // Check transaction amount
+        if (amount != null) {
+            if (amount.compareTo(highValueThreshold) >= 0) {
+                riskScore = riskScore.add(BigDecimal.valueOf(40));
+                reasons.add("High-value transaction: " + amount);
+            } else if (amount.compareTo(suspiciousValueThreshold) >= 0) {
+                riskScore = riskScore.add(BigDecimal.valueOf(20));
+                reasons.add("Suspicious transaction amount: " + amount);
             }
         }
 
-        // Check payment type risk
-        String paymentType = transaction.getPaymentType().toUpperCase();
-        for (String riskType : HIGH_RISK_PAYMENT_TYPES) {
-            if (paymentType.contains(riskType)) {
-                riskScore = riskScore.add(BigDecimal.valueOf(20));
-                reasons.add("High-risk payment type: " + paymentType);
-                break;
+        // Check merchant risk using nested merchant data
+        if (event.getMerchantInfo() != null) {
+            String merchantName = event.getMerchantInfo().getMerchantName();
+            String merchantCategory = event.getMerchantInfo().getMerchantCategory();
+            
+            if (merchantName != null) {
+                String merchant = merchantName.toUpperCase();
+                for (String riskMerchant : HIGH_RISK_MERCHANTS) {
+                    if (merchant.contains(riskMerchant)) {
+                        riskScore = riskScore.add(BigDecimal.valueOf(30));
+                        reasons.add("High-risk merchant category: " + riskMerchant);
+                        break;
+                    }
+                }
+            }
+            
+            // Additional check using merchant category field
+            if (merchantCategory != null) {
+                String category = merchantCategory.toUpperCase();
+                for (String riskMerchant : HIGH_RISK_MERCHANTS) {
+                    if (category.contains(riskMerchant)) {
+                        riskScore = riskScore.add(BigDecimal.valueOf(30));
+                        reasons.add("High-risk merchant category: " + riskMerchant);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Check payment type risk using nested transaction data
+        if (event.getTransaction() != null && event.getTransaction().getPaymentType() != null) {
+            String paymentType = event.getTransaction().getPaymentType().toUpperCase();
+            for (String riskType : HIGH_RISK_PAYMENT_TYPES) {
+                if (paymentType.contains(riskType)) {
+                    riskScore = riskScore.add(BigDecimal.valueOf(20));
+                    reasons.add("High-risk payment type: " + paymentType);
+                    break;
+                }
+            }
+        }
+
+        // Check fraud signals for blacklisted merchant
+        if (event.getFraudSignals() != null && Boolean.TRUE.equals(event.getFraudSignals().getBlacklistedMerchant())) {
+            riskScore = riskScore.add(BigDecimal.valueOf(50));
+            reasons.add("Merchant is blacklisted");
+        }
+
+        // Check behavior metrics for velocity
+        if (event.getBehaviorMetrics() != null) {
+            Integer txnCount24h = event.getBehaviorMetrics().getTransactionCount24h();
+            if (txnCount24h != null && txnCount24h > 20) {
+                riskScore = riskScore.add(BigDecimal.valueOf(25));
+                reasons.add("High transaction velocity: " + txnCount24h + " transactions in 24h");
+            } else if (txnCount24h != null && txnCount24h > 10) {
+                riskScore = riskScore.add(BigDecimal.valueOf(15));
+                reasons.add("Elevated transaction velocity: " + txnCount24h + " transactions in 24h");
             }
         }
 
         // Check abnormal transaction amount based on customer history
-        try {
-            LocalDateTime historyStart = transaction.getTimestamp().minusDays(historyDays);
-            BigDecimal avgAmount = transactionRepository.calculateAverageAmountByCustomerIdAndTimestampBetween(
-                    transaction.getCustomerId(),
-                    historyStart,
-                    transaction.getTimestamp()
-            );
+        if (customerId != null && timestamp != null && amount != null) {
+            try {
+                LocalDateTime historyStart = timestamp.minusDays(historyDays);
+                BigDecimal avgAmount = transactionRepository.calculateAverageAmountByCustomerIdAndTimestampBetween(
+                        customerId,
+                        historyStart,
+                        timestamp
+                );
 
-            if (avgAmount != null && avgAmount.compareTo(BigDecimal.ZERO) > 0) {
-                // Check if transaction amount is 10x the average
-                BigDecimal tenTimesAvg = avgAmount.multiply(BigDecimal.valueOf(10));
-                if (transaction.getAmount().compareTo(tenTimesAvg) >= 0) {
-                    riskScore = riskScore.add(BigDecimal.valueOf(25));
-                    reasons.add(String.format("Abnormal amount: %.2f is 10x customer average of %.2f",
-                            transaction.getAmount(), avgAmount));
+                if (avgAmount != null && avgAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    // Check if transaction amount is 10x the average
+                    BigDecimal tenTimesAvg = avgAmount.multiply(BigDecimal.valueOf(10));
+                    if (amount.compareTo(tenTimesAvg) >= 0) {
+                        riskScore = riskScore.add(BigDecimal.valueOf(25));
+                        reasons.add(String.format("Abnormal amount: %.2f is 10x customer average of %.2f",
+                                amount, avgAmount));
+                    }
+                    // Check if transaction amount is 5x the average
+                    else if (amount.compareTo(avgAmount.multiply(BigDecimal.valueOf(5))) >= 0) {
+                        riskScore = riskScore.add(BigDecimal.valueOf(15));
+                        reasons.add(String.format("Elevated amount: %.2f is 5x customer average of %.2f",
+                                amount, avgAmount));
+                    }
                 }
-                // Check if transaction amount is 5x the average
-                else if (transaction.getAmount().compareTo(avgAmount.multiply(BigDecimal.valueOf(5))) >= 0) {
-                    riskScore = riskScore.add(BigDecimal.valueOf(15));
-                    reasons.add(String.format("Elevated amount: %.2f is 5x customer average of %.2f",
-                            transaction.getAmount(), avgAmount));
+            } catch (Exception e) {
+                log.warn("Failed to calculate customer average amount for {}: {}",
+                        customerId, e.getMessage());
+            }
+        }
+
+        // Check customer average from nested customer data
+        if (event.getCustomer() != null && event.getCustomer().getAvgTransactionAmount() != null && amount != null) {
+            BigDecimal customerAvg = event.getCustomer().getAvgTransactionAmount();
+            if (customerAvg.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal fiveTimesAvg = customerAvg.multiply(BigDecimal.valueOf(5));
+                if (amount.compareTo(fiveTimesAvg) >= 0) {
+                    riskScore = riskScore.add(BigDecimal.valueOf(20));
+                    reasons.add(String.format("Amount %.2f exceeds 5x customer baseline of %.2f",
+                            amount, customerAvg));
                 }
             }
-        } catch (Exception e) {
-            log.warn("Failed to calculate customer average amount for {}: {}",
-                    transaction.getCustomerId(), e.getMessage());
         }
 
         // Cap risk score at 100
@@ -133,7 +196,8 @@ public class RiskAgent implements FraudAgent {
                 .processingTimeMs(processingTime)
                 .build();
 
-        log.debug("RiskAgent completed: score={}, decision={}", riskScore, decision);
+        log.info("RiskAgent completed for txn {}: score={}, decision={}, reasons={}",
+                event.getTxnId(), riskScore, decision, reasons.size());
         return result;
     }
 

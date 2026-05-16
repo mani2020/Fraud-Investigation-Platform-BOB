@@ -1,8 +1,8 @@
 package com.fraud.platform.orchestrator;
 
 import com.fraud.platform.agents.*;
-import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
 import com.fraud.platform.model.FraudAlert;
 import com.fraud.platform.model.FraudDecision;
 import com.fraud.platform.service.DecisionService;
@@ -50,29 +50,29 @@ public class FraudOrchestratorService {
      * Analyze transaction using all fraud detection agents.
      * Agents run in parallel for optimal performance.
      *
-     * @param transaction Transaction event to analyze
+     * @param event Canonical fraud event to analyze
      * @return Final fraud decision with aggregated results
      */
-    public FraudDecision analyzeTransaction(TransactionEvent transaction) {
+    public FraudDecision analyzeTransaction(CanonicalFraudEvent event) {
         long startTime = System.currentTimeMillis();
-        log.info("Starting fraud analysis for transaction: {}", transaction.getTxnId());
+        log.info("Starting fraud analysis for transaction: {}", event.getTxnId());
 
         try {
             // Execute all agents in parallel
             CompletableFuture<AgentResult> riskFuture = CompletableFuture.supplyAsync(
-                    () -> riskAgent.analyze(transaction), executorService);
+                    () -> riskAgent.analyze(event), executorService);
             
             CompletableFuture<AgentResult> geoFuture = CompletableFuture.supplyAsync(
-                    () -> geoAgent.analyze(transaction), executorService);
+                    () -> geoAgent.analyze(event), executorService);
             
             CompletableFuture<AgentResult> deviceFuture = CompletableFuture.supplyAsync(
-                    () -> deviceAgent.analyze(transaction), executorService);
+                    () -> deviceAgent.analyze(event), executorService);
             
             CompletableFuture<AgentResult> amlFuture = CompletableFuture.supplyAsync(
-                    () -> amlAgent.analyze(transaction), executorService);
+                    () -> amlAgent.analyze(event), executorService);
             
             CompletableFuture<AgentResult> behaviorFuture = CompletableFuture.supplyAsync(
-                    () -> behaviorAgent.analyze(transaction), executorService);
+                    () -> behaviorAgent.analyze(event), executorService);
 
             // Wait for all agents to complete
             CompletableFuture.allOf(riskFuture, geoFuture, deviceFuture, amlFuture, behaviorFuture).join();
@@ -86,7 +86,7 @@ public class FraudOrchestratorService {
             agentResults.add(behaviorFuture.get());
 
             // Aggregate results into final decision
-            FraudDecision decision = aggregateResults(transaction.getTxnId(), agentResults);
+            FraudDecision decision = aggregateResults(event.getTxnId(), agentResults);
             decision.setTimestamp(LocalDateTime.now());
             decision.setTotalProcessingTimeMs(System.currentTimeMillis() - startTime);
 
@@ -102,11 +102,11 @@ public class FraudOrchestratorService {
 
             // Log decision matrix
             String decisionMatrix = decisionService.generateSimpleTable(decision);
-            log.info("Fraud analysis completed for {}:\n{}", transaction.getTxnId(), decisionMatrix);
+            log.info("Fraud analysis completed for {}:\n{}", event.getTxnId(), decisionMatrix);
             log.info("Summary: {}", summary);
 
             // Update transaction with fraud decision
-            updateTransaction(transaction.getTxnId(), decision);
+            updateTransaction(event.getTxnId(), decision);
 
             // Create fraud alert for dashboard
             createFraudAlert(decision);
@@ -114,11 +114,11 @@ public class FraudOrchestratorService {
             return decision;
 
         } catch (Exception e) {
-            log.error("Error during fraud analysis for transaction: {}", transaction.getTxnId(), e);
+            log.error("Error during fraud analysis for transaction: {}", event.getTxnId(), e);
             
             // Return safe default decision on error
             return FraudDecision.builder()
-                    .txnId(transaction.getTxnId())
+                    .txnId(event.getTxnId())
                     .finalScore(BigDecimal.valueOf(100))
                     .decision("REVIEW")
                     .allReasons(List.of("Error during fraud analysis: " + e.getMessage()))

@@ -5,6 +5,7 @@ import com.fraud.platform.entity.Transaction;
 import com.fraud.platform.kafka.KafkaProducerService;
 import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
 import com.fraud.platform.model.TransactionRequest;
 import com.fraud.platform.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -158,6 +159,115 @@ public class TransactionService {
         }
         
         return transactionRepository.save(transaction);
+    }
+
+    /**
+     * Update transaction with nested fraud event data from CanonicalFraudEvent.
+     * This method persists rich nested data structures to JSONB columns.
+     *
+     * @param txnId Transaction ID
+     * @param canonicalEvent Canonical fraud event with nested data
+     * @return Updated transaction
+     */
+    @Transactional
+    public Transaction updateWithCanonicalEvent(String txnId, CanonicalFraudEvent canonicalEvent) {
+        log.info("Updating transaction with canonical event data: txnId={}", txnId);
+        
+        Transaction transaction = transactionRepository.findByTxnId(txnId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + txnId));
+        
+        // Update nested data fields (all are optional)
+        if (canonicalEvent.getCustomer() != null) {
+            transaction.setCustomerData(canonicalEvent.getCustomer());
+            log.debug("Updated customer data for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getMerchantInfo() != null) {
+            transaction.setMerchantData(canonicalEvent.getMerchantInfo());
+            log.debug("Updated merchant data for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getDevice() != null) {
+            transaction.setDeviceData(canonicalEvent.getDevice());
+            log.debug("Updated device data for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getLocation() != null) {
+            transaction.setLocationData(canonicalEvent.getLocation());
+            log.debug("Updated location data for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getBehaviorMetrics() != null) {
+            transaction.setBehaviorMetrics(canonicalEvent.getBehaviorMetrics());
+            log.debug("Updated behavior metrics for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getFraudSignals() != null) {
+            transaction.setFraudSignals(canonicalEvent.getFraudSignals());
+            log.debug("Updated fraud signals for txnId={}", txnId);
+        }
+        
+        if (canonicalEvent.getMetadata() != null) {
+            transaction.setMetadata(canonicalEvent.getMetadata());
+            log.debug("Updated metadata for txnId={}", txnId);
+        }
+        
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        log.info("Transaction updated with canonical event data: txnId={}", txnId);
+        
+        return savedTransaction;
+    }
+
+    /**
+     * Update fraud decision with agent results, risk factors, and nested canonical event data.
+     * This is the comprehensive update method that combines fraud decision with rich nested data.
+     *
+     * @param txnId Transaction ID
+     * @param decision Fraud decision (APPROVED, DECLINED, REVIEW)
+     * @param score Fraud score
+     * @param agentResults List of agent results
+     * @param riskFactors List of risk factors
+     * @param canonicalEvent Canonical fraud event with nested data (optional)
+     * @return Updated transaction
+     */
+    @Transactional
+    public Transaction updateFraudDecisionWithCanonicalEvent(String txnId, String decision, java.math.BigDecimal score,
+                                                             List<AgentResult> agentResults, List<String> riskFactors,
+                                                             CanonicalFraudEvent canonicalEvent) {
+        log.info("Updating fraud decision with canonical event: txnId={}, decision={}, score={}", txnId, decision, score);
+        
+        // First update fraud decision and details
+        Transaction transaction = updateFraudDecisionWithDetails(txnId, decision, score, agentResults, riskFactors);
+        
+        // Then update nested canonical event data if provided
+        if (canonicalEvent != null) {
+            if (canonicalEvent.getCustomer() != null) {
+                transaction.setCustomerData(canonicalEvent.getCustomer());
+            }
+            if (canonicalEvent.getMerchantInfo() != null) {
+                transaction.setMerchantData(canonicalEvent.getMerchantInfo());
+            }
+            if (canonicalEvent.getDevice() != null) {
+                transaction.setDeviceData(canonicalEvent.getDevice());
+            }
+            if (canonicalEvent.getLocation() != null) {
+                transaction.setLocationData(canonicalEvent.getLocation());
+            }
+            if (canonicalEvent.getBehaviorMetrics() != null) {
+                transaction.setBehaviorMetrics(canonicalEvent.getBehaviorMetrics());
+            }
+            if (canonicalEvent.getFraudSignals() != null) {
+                transaction.setFraudSignals(canonicalEvent.getFraudSignals());
+            }
+            if (canonicalEvent.getMetadata() != null) {
+                transaction.setMetadata(canonicalEvent.getMetadata());
+            }
+            
+            transaction = transactionRepository.save(transaction);
+            log.info("Transaction updated with fraud decision and canonical event data: txnId={}", txnId);
+        }
+        
+        return transaction;
     }
 
     /**

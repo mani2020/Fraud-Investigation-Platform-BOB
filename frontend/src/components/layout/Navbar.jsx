@@ -44,13 +44,9 @@ const Navbar = ({ onMenuToggle, isMobile }) => {
 
   const fetchNotificationCount = async () => {
     try {
-      // Count high-risk transactions (fraud score >= 0.5 or FLAGGED/REVIEW status)
-      const response = await axios.get(API_ENDPOINTS.TRANSACTIONS);
-      const transactions = response.data;
-      const highRiskCount = transactions.filter(
-        t => t.fraudScore >= 0.5 || t.status === 'FLAGGED' || t.status === 'REVIEW'
-      ).length;
-      setNotificationCount(highRiskCount);
+      // Get count of unacknowledged fraud alerts from dedicated endpoint
+      const response = await axios.get(API_ENDPOINTS.FRAUD_ALERTS_COUNT);
+      setNotificationCount(response.data.count || 0);
     } catch (error) {
       console.error('Error fetching notification count:', error);
       setNotificationCount(0);

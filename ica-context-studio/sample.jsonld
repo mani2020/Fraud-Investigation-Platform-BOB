@@ -1,0 +1,387 @@
+{
+  "@context": {
+    "sro": "http://example.org/sro#",
+    "schema": "http://schema.org/",
+    "id": "@id",
+    "type": "@type",
+    "name": "schema:name",
+    "description": "schema:description",
+    "attributes": "sro:attributes",
+    "identityKey": "sro:identityKey",
+    "humanRef": "sro:humanRef",
+    "invariant": "sro:invariant",
+    "hasState": {
+      "@id": "sro:hasState",
+      "@type": "@id"
+    },
+    "initialState": {
+      "@id": "sro:initialState",
+      "@type": "@id"
+    },
+    "terminalStates": {
+      "@id": "sro:terminalStates",
+      "@type": "@id"
+    },
+    "relatesTo": {
+      "@id": "sro:relatesTo",
+      "@type": "@id"
+    },
+    "emitsEvent": {
+      "@id": "sro:emitsEvent",
+      "@type": "@id"
+    },
+    "from": {
+      "@id": "sro:from",
+      "@type": "@id"
+    },
+    "to": {
+      "@id": "sro:to",
+      "@type": "@id"
+    },
+    "precondition": "sro:precondition",
+    "postcondition": "sro:postcondition",
+    "Entity": "sro:Entity",
+    "Operation": "sro:Operation",
+    "State": "sro:State"
+  },
+  "@graph": [
+    {
+      "id": "sro:Requirement",
+      "type": "Entity",
+      "name": "Requirement",
+      "description": "A documented need or constraint for a software system",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "name": "string",
+        "description": "string",
+        "rationale": "string|null",
+        "acceptanceCriteria": "string|null",
+        "priority": "MUST|SHOULD|COULD|WONT",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|REJECTED"
+      },
+      "invariant": [
+        "requirementCode must be unique",
+        "priority must be one of MoSCoW values",
+        "A requirement must have at least one stakeholder source"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:SystemComponent",
+        "sro:TestCase"
+      ],
+      "emitsEvent": [
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified"
+      ]
+    },
+    {
+      "id": "sro:FunctionalRequirement",
+      "type": "Entity",
+      "name": "FunctionalRequirement",
+      "description": "Describes a specific behavior or function of the system",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "name": "string",
+        "description": "string",
+        "rationale": "string|null",
+        "acceptanceCriteria": "string",
+        "priority": "MUST|SHOULD|COULD|WONT",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|REJECTED"
+      },
+      "invariant": [
+        "Must define clear acceptance criteria",
+        "Must specify expected system behavior"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:SystemComponent",
+        "sro:TestCase"
+      ]
+    },
+    {
+      "id": "sro:NonFunctionalRequirement",
+      "type": "Entity",
+      "name": "NonFunctionalRequirement",
+      "description": "Describes a quality attribute such as performance, security, or usability",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "name": "string",
+        "description": "string",
+        "qualityAttribute": "PERFORMANCE|SECURITY|USABILITY|RELIABILITY|MAINTAINABILITY",
+        "priority": "MUST|SHOULD|COULD|WONT",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|REJECTED"
+      },
+      "invariant": [
+        "Must specify measurable quality criteria",
+        "qualityAttribute must be one of defined values"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementRejected"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:SystemComponent"
+      ]
+    },
+    {
+      "id": "sro:Stakeholder",
+      "type": "Entity",
+      "name": "Stakeholder",
+      "description": "An individual or group with interest in the system requirements",
+      "identityKey": "stakeholderId: UUID",
+      "humanRef": "stakeholderName",
+      "attributes": {
+        "stakeholderId": "string",
+        "stakeholderName": "string",
+        "role": "string",
+        "organization": "string|null",
+        "contactInfo": "string|null"
+      },
+      "invariant": [
+        "stakeholderName must be unique",
+        "role must be defined"
+      ],
+      "relatesTo": [
+        "sro:Requirement",
+        "sro:Goal"
+      ]
+    },
+    {
+      "id": "sro:Goal",
+      "type": "Entity",
+      "name": "Goal",
+      "description": "A high-level objective that requirements refine and support",
+      "identityKey": "goalId: UUID",
+      "humanRef": "goalName",
+      "attributes": {
+        "goalId": "string",
+        "goalName": "string",
+        "description": "string",
+        "priority": "HIGH|MEDIUM|LOW"
+      },
+      "invariant": [
+        "goalName must be unique",
+        "A goal must be refined by at least one requirement"
+      ],
+      "relatesTo": [
+        "sro:Requirement",
+        "sro:Stakeholder"
+      ]
+    },
+    {
+      "id": "sro:SystemComponent",
+      "type": "Entity",
+      "name": "SystemComponent",
+      "description": "A module or component that realizes requirements",
+      "identityKey": "componentId: UUID",
+      "humanRef": "componentName",
+      "attributes": {
+        "componentId": "string",
+        "componentName": "string",
+        "description": "string|null",
+        "technology": "string|null"
+      },
+      "invariant": [
+        "componentName must be unique"
+      ],
+      "relatesTo": [
+        "sro:Requirement"
+      ]
+    },
+    {
+      "id": "sro:TestCase",
+      "type": "Entity",
+      "name": "TestCase",
+      "description": "A test that verifies requirement implementation",
+      "identityKey": "testCaseId: UUID",
+      "humanRef": "testCaseCode",
+      "attributes": {
+        "testCaseId": "string",
+        "testCaseCode": "string",
+        "name": "string",
+        "description": "string",
+        "testType": "UNIT|INTEGRATION|SYSTEM|ACCEPTANCE",
+        "status": "PENDING|PASSED|FAILED"
+      },
+      "invariant": [
+        "testCaseCode must be unique",
+        "Must verify at least one requirement"
+      ],
+      "relatesTo": [
+        "sro:Requirement"
+      ]
+    },
+    {
+      "id": "sro:HasSource",
+      "type": "Operation",
+      "name": "HasSource",
+      "description": "Links a requirement to its originating stakeholder",
+      "from": "sro:Requirement",
+      "to": "sro:Stakeholder",
+      "precondition": [
+        "Requirement must exist",
+        "Stakeholder must exist"
+      ],
+      "postcondition": [
+        "Requirement is associated with at least one Stakeholder",
+        "Stakeholder is recorded as source of the requirement"
+      ]
+    },
+    {
+      "id": "sro:Refines",
+      "type": "Operation",
+      "name": "Refines",
+      "description": "Establishes that a requirement refines a higher-level goal",
+      "from": "sro:Requirement",
+      "to": "sro:Goal",
+      "precondition": [
+        "Requirement must exist",
+        "Goal must exist"
+      ],
+      "postcondition": [
+        "Requirement contributes to achieving the Goal",
+        "Goal is refined by one or more Requirements"
+      ]
+    },
+    {
+      "id": "sro:DependsOn",
+      "type": "Operation",
+      "name": "DependsOn",
+      "description": "Defines dependency between requirements",
+      "from": "sro:Requirement",
+      "to": "sro:Requirement",
+      "precondition": [
+        "Both requirements must exist",
+        "No circular dependencies allowed"
+      ],
+      "postcondition": [
+        "Dependent requirement cannot be implemented before prerequisite",
+        "Dependency relationship is recorded"
+      ]
+    },
+    {
+      "id": "sro:ConflictsWith",
+      "type": "Operation",
+      "name": "ConflictsWith",
+      "description": "Identifies conflicting requirements that need resolution",
+      "from": "sro:Requirement",
+      "to": "sro:Requirement",
+      "precondition": [
+        "Both requirements must exist",
+        "Conflict must be documented"
+      ],
+      "postcondition": [
+        "Conflict is recorded for resolution",
+        "Requirements cannot both be implemented without resolution"
+      ]
+    },
+    {
+      "id": "sro:RealizedBy",
+      "type": "Operation",
+      "name": "RealizedBy",
+      "description": "Links a requirement to the system component that implements it",
+      "from": "sro:Requirement",
+      "to": "sro:SystemComponent",
+      "precondition": [
+        "Requirement must be in APPROVED or IMPLEMENTED state",
+        "SystemComponent must exist"
+      ],
+      "postcondition": [
+        "Requirement is implemented by SystemComponent",
+        "SystemComponent realizes one or more Requirements"
+      ]
+    },
+    {
+      "id": "sro:VerifiedBy",
+      "type": "Operation",
+      "name": "VerifiedBy",
+      "description": "Associates a requirement with test cases that verify its implementation",
+      "from": "sro:Requirement",
+      "to": "sro:TestCase",
+      "precondition": [
+        "Requirement must be in IMPLEMENTED state",
+        "TestCase must exist"
+      ],
+      "postcondition": [
+        "Requirement is verified by one or more TestCases",
+        "TestCase validates the Requirement implementation"
+      ]
+    },
+    {
+      "id": "sro:RequirementDraft",
+      "type": "State",
+      "name": "RequirementDraft",
+      "description": "Requirement is being drafted and not yet approved"
+    },
+    {
+      "id": "sro:RequirementApproved",
+      "type": "State",
+      "name": "RequirementApproved",
+      "description": "Requirement has been reviewed and approved for implementation"
+    },
+    {
+      "id": "sro:RequirementImplemented",
+      "type": "State",
+      "name": "RequirementImplemented",
+      "description": "Requirement has been implemented in the system"
+    },
+    {
+      "id": "sro:RequirementVerified",
+      "type": "State",
+      "name": "RequirementVerified",
+      "description": "Requirement implementation has been tested and verified"
+    },
+    {
+      "id": "sro:RequirementRejected",
+      "type": "State",
+      "name": "RequirementRejected",
+      "description": "Requirement has been rejected and will not be implemented"
+    }
+  ]
+}

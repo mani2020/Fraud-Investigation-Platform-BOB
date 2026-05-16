@@ -1,6 +1,8 @@
 package com.fraud.platform.config;
 
+import com.fraud.platform.kafka.FraudEventDeserializer;
 import com.fraud.platform.kafka.events.TransactionEvent;
+import com.fraud.platform.model.CanonicalFraudEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -30,7 +32,25 @@ import java.util.Map;
 
 /**
  * Kafka configuration for fraud detection platform.
- * Creates required topics and configures Kafka settings.
+ *
+ * <p>Supports both v1 (flat TransactionEvent) and v2 (nested CanonicalFraudEvent) formats
+ * with version-aware deserialization using FraudEventDeserializer.</p>
+ *
+ * <h2>Consumer Factories:</h2>
+ * <ul>
+ *   <li><b>consumerFactory</b>: For v1 legacy TransactionEvent format</li>
+ *   <li><b>canonicalConsumerFactory</b>: For v2 CanonicalFraudEvent format with FraudEventDeserializer</li>
+ * </ul>
+ *
+ * <h2>Listener Container Factories:</h2>
+ * <ul>
+ *   <li><b>kafkaListenerContainerFactory</b>: For v1 consumers</li>
+ *   <li><b>canonicalKafkaListenerContainerFactory</b>: For v2 consumers</li>
+ * </ul>
+ *
+ * @see FraudEventDeserializer
+ * @see CanonicalFraudEvent
+ * @see TransactionEvent
  */
 @Configuration
 @RequiredArgsConstructor
@@ -115,8 +135,10 @@ public class KafkaConfig {
     }
 
     /**
-     * Consumer factory with ErrorHandlingDeserializer so deserialization failures are surfaced
-     * to the container error handler and can be redirected to the invalid events topic.
+     * Consumer factory for v1 legacy TransactionEvent format.
+     *
+     * <p>Uses ErrorHandlingDeserializer so deserialization failures are surfaced
+     * to the container error handler and can be redirected to the invalid events topic.</p>
      */
     @Bean
     public ConsumerFactory<String, TransactionEvent> consumerFactory() {
@@ -142,9 +164,40 @@ public class KafkaConfig {
     }
 
     /**
-     * Listener container factory with retry and topic-based dead letter routing:
-     * - business processing failures -> fraud-transactions-dlq
-     * - deserialization/invalid payload failures -> fraud-invalid-events
+     * Consumer factory for v2 CanonicalFraudEvent format with version-aware deserialization.
+     *
+     * <p>Uses FraudEventDeserializer which automatically detects schema version and
+     * deserializes to CanonicalFraudEvent. Supports both v1 and v2 payloads on the same topic.</p>
+     */
+    @Bean
+    public ConsumerFactory<String, CanonicalFraudEvent> canonicalConsumerFactory() {
+        FraudEventDeserializer fraudEventDeserializer = new FraudEventDeserializer();
+        
+        ErrorHandlingDeserializer<CanonicalFraudEvent> valueDeserializer =
+                new ErrorHandlingDeserializer<>(fraudEventDeserializer);
+        ErrorHandlingDeserializer<String> keyDeserializer =
+                new ErrorHandlingDeserializer<>(new StringDeserializer());
+
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId + "-v2");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        return new org.springframework.kafka.core.DefaultKafkaConsumerFactory<>(
+                props,
+                keyDeserializer,
+                valueDeserializer
+        );
+    }
+
+    /**
+     * Listener container factory for v1 legacy TransactionEvent format.
+     *
+     * <p>Configured with retry and topic-based dead letter routing:</p>
+     * <ul>
+     *   <li>business processing failures → fraud-transactions-dlq</li>
+     *   <li>deserialization/invalid payload failures → fraud-invalid-events</li>
+     * </ul>
      */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, TransactionEvent> kafkaListenerContainerFactory(
@@ -157,6 +210,32 @@ public class KafkaConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setCommonErrorHandler(kafkaErrorHandler);
         factory.setRecordFilterStrategy((RecordFilterStrategy<String, TransactionEvent>) record -> false);
+        return factory;
+    }
+
+    /**
+     * Listener container factory for v2 CanonicalFraudEvent format.
+     *
+     * <p>Configured with retry and topic-based dead letter routing:</p>
+     * <ul>
+     *   <li>business processing failures → fraud-transactions-dlq</li>
+     *   <li>deserialization/invalid payload failures → fraud-invalid-events</li>
+     * </ul>
+     *
+     * <p>Uses FraudEventDeserializer for version-aware deserialization supporting both
+     * v1 and v2 payloads on the same topic.</p>
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, CanonicalFraudEvent> canonicalKafkaListenerContainerFactory(
+            ConsumerFactory<String, CanonicalFraudEvent> canonicalConsumerFactory,
+            CommonErrorHandler kafkaErrorHandler) {
+
+        ConcurrentKafkaListenerContainerFactory<String, CanonicalFraudEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(canonicalConsumerFactory);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.setCommonErrorHandler(kafkaErrorHandler);
+        factory.setRecordFilterStrategy((RecordFilterStrategy<String, CanonicalFraudEvent>) record -> false);
         return factory;
     }
 

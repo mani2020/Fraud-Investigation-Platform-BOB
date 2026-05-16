@@ -53,11 +53,10 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
         
-        <!-- PostgreSQL -->
+        <!-- PostgreSQL JDBC Driver for PGobject support -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
         
         <!-- Flyway for database migrations -->
@@ -88,6 +87,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        
+        <!-- Hibernate Types for JSONB support (Hibernate 6 / Spring Boot 3) -->
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-63</artifactId>
+            <version>3.7.3</version>
         </dependency>
         
         <!-- Dev Tools -->

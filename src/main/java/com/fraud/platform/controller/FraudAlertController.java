@@ -128,6 +128,18 @@ public class FraudAlertController {
     }
 
     /**
+     * Get count of unacknowledged alerts.
+     *
+     * @return Count of unacknowledged alerts
+     */
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Integer>> getUnacknowledgedCount() {
+        log.info("Fetching unacknowledged alert count");
+        int count = notificationService.getUnacknowledgedAlerts().size();
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
+    /**
      * Health check endpoint.
      *
      * @return OK status

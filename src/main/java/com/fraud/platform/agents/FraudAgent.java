@@ -1,21 +1,23 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.kafka.events.TransactionEvent;
 import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
 
 /**
  * Interface for fraud detection agents.
- * Each agent analyzes a specific aspect of the transaction.
+ * Each agent analyzes a specific aspect of the fraud event.
  */
 public interface FraudAgent {
     
     /**
-     * Analyze transaction and return fraud assessment.
+     * Analyze fraud event and return fraud assessment.
+     * Agents should leverage nested data structures (transaction, merchant, device, location, etc.)
+     * and fraud signals for enhanced detection capabilities.
      *
-     * @param transaction Transaction event to analyze
+     * @param event Canonical fraud event with nested data to analyze
      * @return Agent analysis result with score and reasons
      */
-    AgentResult analyze(TransactionEvent transaction);
+    AgentResult analyze(CanonicalFraudEvent event);
     
     /**
      * Get agent name for identification.

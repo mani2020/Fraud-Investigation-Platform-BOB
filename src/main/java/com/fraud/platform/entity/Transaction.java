@@ -1,11 +1,16 @@
 package com.fraud.platform.entity;
 
+import com.fraud.platform.entity.converter.*;
+import com.fraud.platform.model.nested.*;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -68,6 +73,42 @@ public class Transaction {
 
     @Column(name = "risk_factors", columnDefinition = "TEXT")
     private String riskFactorsJson;
+
+    // JSONB columns for nested fraud event data
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "customer_data", columnDefinition = "jsonb")
+    @Convert(converter = CustomerInfoConverter.class)
+    private CustomerInfo customerData;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "merchant_data", columnDefinition = "jsonb")
+    @Convert(converter = MerchantInfoConverter.class)
+    private MerchantInfo merchantData;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "device_data", columnDefinition = "jsonb")
+    @Convert(converter = DeviceInfoConverter.class)
+    private DeviceInfo deviceData;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "location_data", columnDefinition = "jsonb")
+    @Convert(converter = LocationInfoConverter.class)
+    private LocationInfo locationData;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "behavior_metrics", columnDefinition = "jsonb")
+    @Convert(converter = BehaviorMetricsConverter.class)
+    private BehaviorMetrics behaviorMetrics;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fraud_signals", columnDefinition = "jsonb")
+    @Convert(converter = FraudSignalsConverter.class)
+    private FraudSignals fraudSignals;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    @Convert(converter = MetadataInfoConverter.class)
+    private MetadataInfo metadata;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

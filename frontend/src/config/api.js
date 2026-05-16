@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
   
   // Fraud alert endpoints
   FRAUD_ALERTS: `${API_BASE_URL}/api/fraud-alerts`,
+  FRAUD_ALERTS_COUNT: `${API_BASE_URL}/api/fraud-alerts/count`,
   FRAUD_ALERT_RESOLVE: (alertId) => `${API_BASE_URL}/api/fraud-alerts/${alertId}/resolve`,
   FRAUD_ALERT_DISMISS: (alertId) => `${API_BASE_URL}/api/fraud-alerts/${alertId}/dismiss`,
   
