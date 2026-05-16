@@ -2,7 +2,6 @@ package com.fraud.platform.entity;
 
 import com.fraud.platform.entity.converter.*;
 import com.fraud.platform.model.nested.*;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

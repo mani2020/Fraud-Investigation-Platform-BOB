@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -327,7 +328,7 @@ public class TransactionEventMapper {
                         .map(com.fraud.platform.entity.Transaction::getAmount)
                         .filter(amount -> amount != null)
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
-                        .divide(BigDecimal.valueOf(customerTransactions.size()), 2, BigDecimal.ROUND_HALF_UP);
+                        .divide(BigDecimal.valueOf(customerTransactions.size()), 2, RoundingMode.HALF_UP);
                 
                 event.getCustomer().setAvgTransactionAmount(avgAmount);
                 event.getCustomer().setLastActivityDate(customerTransactions.get(0).getTimestamp());
@@ -362,7 +363,7 @@ public class TransactionEventMapper {
             // Calculate velocity score (simple: txn count / 24)
             if (txnCount24h != null && txnCount24h > 0) {
                 BigDecimal velocityScore = BigDecimal.valueOf(txnCount24h)
-                        .divide(BigDecimal.valueOf(24), 2, BigDecimal.ROUND_HALF_UP);
+                        .divide(BigDecimal.valueOf(24), 2, RoundingMode.HALF_UP);
                 builder.velocityScore(velocityScore);
             }
 

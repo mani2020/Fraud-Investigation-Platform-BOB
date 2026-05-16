@@ -2,7 +2,6 @@ package com.fraud.platform.agents;
 
 import com.fraud.platform.model.AgentResult;
 import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.model.nested.MerchantInfo;
 import com.fraud.platform.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
