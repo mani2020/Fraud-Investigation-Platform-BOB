@@ -1,6 +1,7 @@
 package com.fraud.platform.mapper;
 
 import com.fraud.platform.kafka.events.TransactionEvent;
+import com.fraud.platform.kafka.events.TransactionEventV2;
 import com.fraud.platform.model.CanonicalFraudEvent;
 import com.fraud.platform.model.TransactionRequest;
 import com.fraud.platform.model.nested.*;
@@ -17,19 +18,24 @@ import java.util.List;
 
 /**
  * Mapper for transforming between different transaction payload formats.
- * 
- * <p>This mapper handles bidirectional transformation between:</p>
+ *
+ * <p>
+ * This mapper handles bidirectional transformation between:
+ * </p>
  * <ul>
- *   <li>Legacy flat TransactionEvent (v1) ↔ CanonicalFraudEvent</li>
- *   <li>Flat TransactionRequest (API) → CanonicalFraudEvent</li>
- *   <li>CanonicalFraudEvent → Legacy TransactionEvent (backward compatibility)</li>
+ * <li>Legacy flat TransactionEvent (v1) ↔ CanonicalFraudEvent</li>
+ * <li>Nested TransactionEventV2 (v2) ↔ CanonicalFraudEvent</li>
+ * <li>Flat TransactionRequest (API) → CanonicalFraudEvent</li>
+ * <li>CanonicalFraudEvent → Legacy TransactionEvent (backward
+ * compatibility)</li>
  * </ul>
  * 
  * <h2>Usage Examples:</h2>
  * 
  * <h3>1. Transform Legacy Event to Canonical:</h3>
+ * 
  * <pre>{@code
- * @Autowired
+ * &#64;Autowired
  * private TransactionEventMapper mapper;
  * 
  * TransactionEvent legacyEvent = // ... from Kafka
@@ -38,6 +44,7 @@ import java.util.List;
  * }</pre>
  * 
  * <h3>2. Transform API Request to Canonical:</h3>
+ * 
  * <pre>{@code
  * TransactionRequest request = // ... from REST API
  * CanonicalFraudEvent canonical = mapper.fromRequest(request);
@@ -45,6 +52,7 @@ import java.util.List;
  * }</pre>
  * 
  * <h3>3. Enrich Canonical Event:</h3>
+ * 
  * <pre>{@code
  * CanonicalFraudEvent canonical = // ... from any source
  * CanonicalFraudEvent enriched = mapper.enrich(canonical);
@@ -52,6 +60,7 @@ import java.util.List;
  * }</pre>
  * 
  * <h3>4. Convert Back to Legacy Format:</h3>
+ * 
  * <pre>{@code
  * CanonicalFraudEvent canonical = // ... internal format
  * TransactionEvent legacy = mapper.toLegacy(canonical);
@@ -72,8 +81,10 @@ public class TransactionEventMapper {
     /**
      * Transform legacy flat TransactionEvent (v1) to CanonicalFraudEvent.
      * 
-     * <p>Maps flat fields to nested structure while preserving all data.
-     * Sets schemaVersion to "v1" to indicate legacy format.</p>
+     * <p>
+     * Maps flat fields to nested structure while preserving all data.
+     * Sets schemaVersion to "v1" to indicate legacy format.
+     * </p>
      * 
      * @param event legacy transaction event from Kafka
      * @return canonical fraud event with v1 schema
@@ -111,8 +122,10 @@ public class TransactionEventMapper {
     /**
      * Transform flat TransactionRequest (API) to CanonicalFraudEvent.
      * 
-     * <p>Maps API request fields to nested structure.
-     * Sets schemaVersion to "v2" (default nested format).</p>
+     * <p>
+     * Maps API request fields to nested structure.
+     * Sets schemaVersion to "v2" (default nested format).
+     * </p>
      * 
      * @param request transaction request from REST API
      * @return canonical fraud event with v2 schema
@@ -149,10 +162,104 @@ public class TransactionEventMapper {
     }
 
     /**
-     * Transform CanonicalFraudEvent to legacy TransactionEvent (for backward compatibility).
+     * Transform TransactionEventV2 (v2 nested format) to CanonicalFraudEvent.
+     *
+     * <p>
+     * Direct mapping from v2 nested structure to canonical format.
+     * This is the most efficient transformation as both use the same nested
+     * structure.
+     * </p>
+     *
+     * @param eventV2 transaction event v2 from Kafka
+     * @return canonical fraud event with v2 schema
+     * @throws IllegalArgumentException if eventV2 is null
+     */
+    public CanonicalFraudEvent fromV2(TransactionEventV2 eventV2) {
+        if (eventV2 == null) {
+            log.warn("Attempted to transform null TransactionEventV2");
+            throw new IllegalArgumentException("TransactionEventV2 cannot be null");
+        }
+
+        log.debug("Transforming TransactionEventV2 to CanonicalFraudEvent: txnId={}", eventV2.getTxnId());
+
+        try {
+            CanonicalFraudEvent canonical = CanonicalFraudEvent.builder()
+                    .txnId(eventV2.getTxnId())
+                    .schemaVersion(eventV2.getSchemaVersion() != null ? eventV2.getSchemaVersion() : "v2")
+                    .eventTimestamp(
+                            eventV2.getEventTimestamp() != null ? eventV2.getEventTimestamp() : LocalDateTime.now())
+                    .customer(eventV2.getCustomer())
+                    .transaction(eventV2.getTransaction())
+                    .merchant(eventV2.getMerchant())
+                    .device(eventV2.getDevice())
+                    .location(eventV2.getLocation())
+                    .behaviorMetrics(eventV2.getBehaviorMetrics())
+                    .fraudSignals(eventV2.getFraudSignals())
+                    .metadata(eventV2.getMetadata())
+                    .build();
+
+            log.debug("Successfully transformed v2 event: txnId={}, schemaVersion={}",
+                    eventV2.getTxnId(), canonical.getSchemaVersion());
+            return canonical;
+
+        } catch (Exception e) {
+            log.error("Error transforming TransactionEventV2: txnId={}", eventV2.getTxnId(), e);
+            throw new RuntimeException("Failed to transform v2 event", e);
+        }
+    }
+
+    /**
+     * Transform CanonicalFraudEvent to TransactionEventV2 (v2 nested format).
+     *
+     * <p>
+     * Direct mapping from canonical format to v2 nested structure.
+     * Useful for publishing enriched events back to Kafka.
+     * </p>
+     *
+     * @param canonical canonical fraud event
+     * @return transaction event v2 with nested structure
+     * @throws IllegalArgumentException if canonical is null
+     */
+    public TransactionEventV2 toV2(CanonicalFraudEvent canonical) {
+        if (canonical == null) {
+            log.warn("Attempted to transform null CanonicalFraudEvent to v2");
+            throw new IllegalArgumentException("CanonicalFraudEvent cannot be null");
+        }
+
+        log.debug("Transforming CanonicalFraudEvent to TransactionEventV2: txnId={}", canonical.getTxnId());
+
+        try {
+            TransactionEventV2 eventV2 = TransactionEventV2.builder()
+                    .txnId(canonical.getTxnId())
+                    .schemaVersion(canonical.getSchemaVersion() != null ? canonical.getSchemaVersion() : "v2")
+                    .eventTimestamp(canonical.getEventTimestamp())
+                    .customer(canonical.getCustomer())
+                    .transaction(canonical.getTransaction())
+                    .merchant(canonical.getMerchantInfo())
+                    .device(canonical.getDevice())
+                    .location(canonical.getLocation())
+                    .behaviorMetrics(canonical.getBehaviorMetrics())
+                    .fraudSignals(canonical.getFraudSignals())
+                    .metadata(canonical.getMetadata())
+                    .build();
+
+            log.debug("Successfully transformed to v2 format: txnId={}", canonical.getTxnId());
+            return eventV2;
+
+        } catch (Exception e) {
+            log.error("Error transforming CanonicalFraudEvent to v2: txnId={}", canonical.getTxnId(), e);
+            throw new RuntimeException("Failed to transform to v2 format", e);
+        }
+    }
+
+    /**
+     * Transform CanonicalFraudEvent to legacy TransactionEvent (for backward
+     * compatibility).
      * 
-     * <p>Flattens nested structure back to legacy flat format.
-     * Useful for systems that still expect the old format.</p>
+     * <p>
+     * Flattens nested structure back to legacy flat format.
+     * Useful for systems that still expect the old format.
+     * </p>
      * 
      * @param canonical canonical fraud event
      * @return legacy transaction event with flat structure
@@ -191,16 +298,20 @@ public class TransactionEventMapper {
     /**
      * Enrich CanonicalFraudEvent with additional data.
      * 
-     * <p>Enrichment includes:</p>
+     * <p>
+     * Enrichment includes:
+     * </p>
      * <ul>
-     *   <li>Customer transaction history and behavioral metrics</li>
-     *   <li>Device trust indicators</li>
-     *   <li>Velocity calculations (24h transaction count and amount)</li>
-     *   <li>Initial fraud signal detection</li>
+     * <li>Customer transaction history and behavioral metrics</li>
+     * <li>Device trust indicators</li>
+     * <li>Velocity calculations (24h transaction count and amount)</li>
+     * <li>Initial fraud signal detection</li>
      * </ul>
      * 
-     * <p>This method is idempotent and safe to call multiple times.
-     * If enrichment fails, returns the original event with a warning log.</p>
+     * <p>
+     * This method is idempotent and safe to call multiple times.
+     * If enrichment fails, returns the original event with a warning log.
+     * </p>
      * 
      * @param event canonical fraud event to enrich
      * @return enriched canonical fraud event
@@ -315,25 +426,25 @@ public class TransactionEventMapper {
 
         try {
             String customerId = event.getCustomer().getCustomerId();
-            
+
             // Get customer transaction history
-            List<com.fraud.platform.entity.Transaction> customerTransactions = 
-                    transactionRepository.findByCustomerIdOrderByTimestampDesc(customerId);
+            List<com.fraud.platform.entity.Transaction> customerTransactions = transactionRepository
+                    .findByCustomerIdOrderByTimestampDesc(customerId);
 
             if (!customerTransactions.isEmpty()) {
                 event.getCustomer().setTotalTransactions((long) customerTransactions.size());
-                
+
                 // Calculate average transaction amount
                 BigDecimal avgAmount = customerTransactions.stream()
                         .map(com.fraud.platform.entity.Transaction::getAmount)
                         .filter(amount -> amount != null)
                         .reduce(BigDecimal.ZERO, BigDecimal::add)
                         .divide(BigDecimal.valueOf(customerTransactions.size()), 2, RoundingMode.HALF_UP);
-                
+
                 event.getCustomer().setAvgTransactionAmount(avgAmount);
                 event.getCustomer().setLastActivityDate(customerTransactions.get(0).getTimestamp());
-                
-                log.debug("Enriched customer info: customerId={}, totalTxns={}, avgAmount={}", 
+
+                log.debug("Enriched customer info: customerId={}, totalTxns={}, avgAmount={}",
                         customerId, customerTransactions.size(), avgAmount);
             }
 
@@ -371,11 +482,11 @@ public class TransactionEventMapper {
             if (event.getCustomer().getAvgTransactionAmount() != null && event.getAmount() != null) {
                 BigDecimal avgAmount = event.getCustomer().getAvgTransactionAmount();
                 BigDecimal currentAmount = event.getAmount();
-                
+
                 // Flag as unusual if > 3x average
                 boolean unusualAmount = currentAmount.compareTo(avgAmount.multiply(BigDecimal.valueOf(3))) > 0;
                 builder.unusualAmount(unusualAmount);
-                
+
                 builder.avgTransactionAmount(avgAmount);
             }
 
@@ -397,7 +508,7 @@ public class TransactionEventMapper {
             if (event.getDevice() != null) {
                 builder.vpnDetected(event.getDevice().getVpnDetected());
                 builder.proxyDetected(event.getDevice().getProxyDetected());
-                
+
                 if (Boolean.TRUE.equals(event.getDevice().getVpnDetected())) {
                     suspiciousPatterns.add("VPN_DETECTED");
                 }
@@ -421,7 +532,8 @@ public class TransactionEventMapper {
             }
 
             // Check for unusual amount
-            if (event.getBehaviorMetrics() != null && Boolean.TRUE.equals(event.getBehaviorMetrics().getUnusualAmount())) {
+            if (event.getBehaviorMetrics() != null
+                    && Boolean.TRUE.equals(event.getBehaviorMetrics().getUnusualAmount())) {
                 suspiciousPatterns.add("UNUSUAL_AMOUNT");
             }
 
@@ -431,7 +543,7 @@ public class TransactionEventMapper {
             int riskScore = calculateInitialRiskScore(event, suspiciousPatterns.size());
             builder.riskScore(riskScore);
 
-            log.debug("Detected initial fraud signals: txnId={}, patterns={}, riskScore={}", 
+            log.debug("Detected initial fraud signals: txnId={}, patterns={}, riskScore={}",
                     event.getTxnId(), suspiciousPatterns.size(), riskScore);
 
         } catch (Exception e) {
