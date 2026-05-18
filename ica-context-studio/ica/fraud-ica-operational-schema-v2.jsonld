@@ -1,0 +1,1050 @@
+{
+  "@context": {
+    "fraud": "https://fraud.platform.ibm.com/operational#",
+    "schema": "http://schema.org/",
+    "id": "@id",
+    "type": "@type",
+    "name": "schema:name",
+    "description": "schema:description",
+    "attributes": "fraud:attributes",
+    "identityKey": "fraud:identityKey",
+    "humanRef": "fraud:humanRef",
+    "invariant": "fraud:invariant",
+    "hasState": {
+      "@id": "fraud:hasState",
+      "@type": "@id"
+    },
+    "initialState": {
+      "@id": "fraud:initialState",
+      "@type": "@id"
+    },
+    "terminalStates": {
+      "@id": "fraud:terminalStates",
+      "@type": "@id"
+    },
+    "relatesTo": {
+      "@id": "fraud:relatesTo",
+      "@type": "@id"
+    },
+    "emitsEvent": {
+      "@id": "fraud:emitsEvent",
+      "@type": "@id"
+    },
+    "from": {
+      "@id": "fraud:from",
+      "@type": "@id"
+    },
+    "to": {
+      "@id": "fraud:to",
+      "@type": "@id"
+    },
+    "precondition": "fraud:precondition",
+    "postcondition": "fraud:postcondition",
+    "Entity": "fraud:Entity",
+    "Operation": "fraud:Operation",
+    "State": "fraud:State"
+  },
+  "@graph": [
+    {
+      "id": "fraud:Transaction",
+      "type": "Entity",
+      "name": "Transaction",
+      "description": "Central operational entity representing a payment transaction in the fraud investigation workflow",
+      "identityKey": "txnId: string",
+      "humanRef": "txnId",
+      "attributes": {
+        "id": "long",
+        "txnId": "string",
+        "customerId": "string",
+        "amount": "decimal",
+        "merchant": "string",
+        "country": "string",
+        "deviceId": "string",
+        "paymentType": "CREDIT_CARD|DEBIT_CARD|WIRE_TRANSFER|ACH",
+        "timestamp": "dateTime",
+        "status": "PENDING|APPROVED|REJECTED|FLAGGED",
+        "fraudScore": "decimal",
+        "fraudDecision": "string",
+        "agentResultsJson": "text",
+        "riskFactorsJson": "text",
+        "createdAt": "dateTime"
+      },
+      "invariant": [
+        "txnId must be unique",
+        "amount must be greater than 0",
+        "status must be one of defined values"
+      ],
+      "hasState": [
+        "fraud:TransactionPending",
+        "fraud:TransactionApproved",
+        "fraud:TransactionRejected",
+        "fraud:TransactionFlagged"
+      ],
+      "initialState": "fraud:TransactionPending",
+      "terminalStates": [
+        "fraud:TransactionApproved",
+        "fraud:TransactionRejected"
+      ],
+      "relatesTo": [
+        "fraud:Customer",
+        "fraud:Device",
+        "fraud:Merchant",
+        "fraud:Account",
+        "fraud:FraudAnalysis"
+      ]
+    },
+    {
+      "id": "fraud:Customer",
+      "type": "Entity",
+      "name": "Customer",
+      "description": "Customer entity for fraud ring detection and behavioral analysis",
+      "identityKey": "customerId: string",
+      "humanRef": "customerId",
+      "attributes": {
+        "customerId": "string",
+        "name": "string",
+        "email": "string",
+        "riskProfile": "LOW|MEDIUM|HIGH|CRITICAL",
+        "accountAge": "integer",
+        "totalTransactions": "integer",
+        "suspiciousActivityCount": "integer"
+      },
+      "invariant": [
+        "customerId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Account",
+        "fraud:Device",
+        "fraud:Transaction"
+      ]
+    },
+    {
+      "id": "fraud:Account",
+      "type": "Entity",
+      "name": "Account",
+      "description": "Financial account for mule account detection and investigation",
+      "identityKey": "accountId: string",
+      "humanRef": "accountId",
+      "attributes": {
+        "accountId": "string",
+        "customerId": "string",
+        "accountType": "CHECKING|SAVINGS|CREDIT",
+        "balance": "decimal",
+        "status": "ACTIVE|SUSPENDED|CLOSED",
+        "openedDate": "dateTime",
+        "isMuleAccount": "boolean"
+      },
+      "invariant": [
+        "accountId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Customer",
+        "fraud:Transaction"
+      ]
+    },
+    {
+      "id": "fraud:Device",
+      "type": "Entity",
+      "name": "Device",
+      "description": "Device entity for device reuse detection and fraud ring analysis",
+      "identityKey": "deviceId: string",
+      "humanRef": "deviceId",
+      "attributes": {
+        "deviceId": "string",
+        "deviceType": "MOBILE|DESKTOP|TABLET|ATM",
+        "fingerprint": "string",
+        "ipAddress": "string",
+        "isTrusted": "boolean",
+        "firstSeen": "dateTime",
+        "lastSeen": "dateTime",
+        "customerCount": "integer",
+        "transactionCount": "integer"
+      },
+      "invariant": [
+        "deviceId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Customer",
+        "fraud:Transaction"
+      ]
+    },
+    {
+      "id": "fraud:Merchant",
+      "type": "Entity",
+      "name": "Merchant",
+      "description": "Merchant entity for suspicious merchant clustering and investigation",
+      "identityKey": "merchantId: string",
+      "humanRef": "name",
+      "attributes": {
+        "merchantId": "string",
+        "name": "string",
+        "category": "string",
+        "riskLevel": "LOW|MEDIUM|HIGH|CRITICAL",
+        "country": "string",
+        "isVerified": "boolean",
+        "fraudIncidentCount": "integer"
+      },
+      "invariant": [
+        "merchantId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Transaction"
+      ]
+    },
+    {
+      "id": "fraud:FraudAnalysis",
+      "type": "Entity",
+      "name": "FraudAnalysis",
+      "description": "Runtime fraud analysis orchestration result",
+      "identityKey": "analysisId: string",
+      "humanRef": "txnId",
+      "attributes": {
+        "analysisId": "string",
+        "txnId": "string",
+        "timestamp": "dateTime",
+        "processingTimeMs": "long",
+        "finalScore": "decimal",
+        "riskLevel": "LOW|MEDIUM|HIGH|CRITICAL",
+        "confidence": "decimal",
+        "agentCount": "integer"
+      },
+      "invariant": [
+        "analysisId must be unique",
+        "finalScore must be between 0 and 100",
+        "confidence must be between 0 and 1"
+      ],
+      "hasState": [
+        "fraud:AnalysisPending",
+        "fraud:AnalysisInProgress",
+        "fraud:AnalysisCompleted"
+      ],
+      "initialState": "fraud:AnalysisPending",
+      "terminalStates": [
+        "fraud:AnalysisCompleted"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:AgentResult",
+        "fraud:FraudDecision"
+      ]
+    },
+    {
+      "id": "fraud:FraudAgent",
+      "type": "Entity",
+      "name": "FraudAgent",
+      "description": "Base fraud detection agent entity for per-agent reasoning visibility",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "string",
+        "agentName": "RISK|GEO|DEVICE|AML|BEHAVIOR",
+        "agentType": "RULE_BASED|ML_BASED",
+        "version": "string",
+        "weight": "decimal",
+        "enabled": "boolean"
+      },
+      "invariant": [
+        "agentId must be unique",
+        "weight must be between 0 and 1"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:RiskAgent",
+      "type": "Entity",
+      "name": "RiskAgent",
+      "description": "Rule-based risk scoring agent for deterministic fraud detection",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "fraud.agent.risk",
+        "agentName": "RISK",
+        "agentType": "RULE_BASED",
+        "version": "1.0.0",
+        "weight": "0.25",
+        "enabled": "true"
+      },
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:GeoAgent",
+      "type": "Entity",
+      "name": "GeoAgent",
+      "description": "Geolocation-based fraud detection agent",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "fraud.agent.geo",
+        "agentName": "GEO",
+        "agentType": "RULE_BASED",
+        "version": "1.0.0",
+        "weight": "0.20",
+        "enabled": "true"
+      },
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:DeviceAgent",
+      "type": "Entity",
+      "name": "DeviceAgent",
+      "description": "Device fingerprinting and trust scoring agent",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "fraud.agent.device",
+        "agentName": "DEVICE",
+        "agentType": "RULE_BASED",
+        "version": "1.0.0",
+        "weight": "0.20",
+        "enabled": "true"
+      },
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:Device",
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:AMLAgent",
+      "type": "Entity",
+      "name": "AMLAgent",
+      "description": "Anti-Money Laundering detection agent",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "fraud.agent.aml",
+        "agentName": "AML",
+        "agentType": "RULE_BASED",
+        "version": "1.0.0",
+        "weight": "0.20",
+        "enabled": "true"
+      },
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:BehaviorAgent",
+      "type": "Entity",
+      "name": "BehaviorAgent",
+      "description": "Behavioral analysis agent for anomaly detection",
+      "identityKey": "agentId: string",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentId": "fraud.agent.behavior",
+        "agentName": "BEHAVIOR",
+        "agentType": "ML_BASED",
+        "version": "1.0.0",
+        "weight": "0.15",
+        "enabled": "true"
+      },
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:Customer",
+        "fraud:Transaction",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:AgentResult",
+      "type": "Entity",
+      "name": "AgentResult",
+      "description": "Individual fraud agent execution result for per-agent reasoning",
+      "identityKey": "agentName + txnId",
+      "humanRef": "agentName",
+      "attributes": {
+        "agentName": "RISK|GEO|DEVICE|AML|BEHAVIOR",
+        "txnId": "string",
+        "score": "decimal",
+        "reason": "string",
+        "confidence": "decimal",
+        "processingTimeMs": "long",
+        "riskFactors": "array"
+      },
+      "invariant": [
+        "score must be between 0 and 100",
+        "confidence must be between 0 and 1"
+      ],
+      "relatesTo": [
+        "fraud:FraudAgent",
+        "fraud:FraudAnalysis",
+        "fraud:FraudDecision",
+        "fraud:Explanation"
+      ]
+    },
+    {
+      "id": "fraud:FraudDecision",
+      "type": "Entity",
+      "name": "FraudDecision",
+      "description": "Final operational fraud decision with runtime-aligned properties",
+      "identityKey": "txnId: string",
+      "humanRef": "decision",
+      "attributes": {
+        "txnId": "string",
+        "fraudScore": "decimal",
+        "finalDecision": "APPROVE|OTP|REVIEW|HOLD|BLOCK|REJECT",
+        "confidence": "decimal",
+        "severity": "LOW|MEDIUM|HIGH|CRITICAL",
+        "decisionReason": "string",
+        "decisionTimestamp": "dateTime",
+        "totalProcessingTimeMs": "long",
+        "requiresReview": "boolean",
+        "autoApproved": "boolean"
+      },
+      "invariant": [
+        "finalDecision must be one of defined values",
+        "fraudScore must be between 0 and 100",
+        "confidence must be between 0 and 1"
+      ],
+      "hasState": [
+        "fraud:DecisionPending",
+        "fraud:DecisionMade"
+      ],
+      "initialState": "fraud:DecisionPending",
+      "terminalStates": [
+        "fraud:DecisionMade"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:FraudAnalysis",
+        "fraud:AgentResult",
+        "fraud:Explanation",
+        "fraud:FraudAlert",
+        "fraud:AuditTrail"
+      ]
+    },
+    {
+      "id": "fraud:Explanation",
+      "type": "Entity",
+      "name": "Explanation",
+      "description": "Explainable AI reasoning for fraud decision lineage",
+      "identityKey": "txnId: string",
+      "humanRef": "explanationText",
+      "attributes": {
+        "txnId": "string",
+        "explanationText": "text",
+        "keyFactors": "array",
+        "riskIndicators": "array",
+        "mitigatingFactors": "array",
+        "confidence": "decimal",
+        "contributingAgents": "array"
+      },
+      "invariant": [
+        "explanationText must not be empty",
+        "confidence must be between 0 and 1"
+      ],
+      "relatesTo": [
+        "fraud:FraudDecision",
+        "fraud:AgentResult",
+        "fraud:ContributingFactor"
+      ]
+    },
+    {
+      "id": "fraud:ContributingFactor",
+      "type": "Entity",
+      "name": "ContributingFactor",
+      "description": "Quantified factor contributing to fraud decision for explainability",
+      "identityKey": "factorId: string",
+      "humanRef": "factorName",
+      "attributes": {
+        "factorId": "string",
+        "txnId": "string",
+        "factorName": "string",
+        "factorType": "RISK|BEHAVIORAL|GEOGRAPHIC|DEVICE|AML",
+        "impact": "decimal",
+        "severity": "LOW|MEDIUM|HIGH|CRITICAL",
+        "agentSource": "string"
+      },
+      "invariant": [
+        "impact must be between 0 and 100"
+      ],
+      "relatesTo": [
+        "fraud:Explanation",
+        "fraud:AgentResult"
+      ]
+    },
+    {
+      "id": "fraud:FraudAlert",
+      "type": "Entity",
+      "name": "FraudAlert",
+      "description": "Operational fraud alert for investigation workflow",
+      "identityKey": "alertId: string",
+      "humanRef": "alertId",
+      "attributes": {
+        "alertId": "string",
+        "txnId": "string",
+        "alertType": "HIGH_RISK|SUSPICIOUS_PATTERN|AML_FLAG|DEVICE_FRAUD|ACCOUNT_TAKEOVER",
+        "severity": "LOW|MEDIUM|HIGH|CRITICAL",
+        "status": "NEW|ACKNOWLEDGED|IN_PROGRESS|RESOLVED|CLOSED",
+        "message": "text",
+        "createdAt": "dateTime",
+        "escalationLevel": "L1|L2|L3",
+        "assignedTo": "string"
+      },
+      "invariant": [
+        "alertId must be unique"
+      ],
+      "hasState": [
+        "fraud:AlertNew",
+        "fraud:AlertAcknowledged",
+        "fraud:AlertInProgress",
+        "fraud:AlertResolved"
+      ],
+      "initialState": "fraud:AlertNew",
+      "terminalStates": [
+        "fraud:AlertResolved"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:FraudDecision",
+        "fraud:Investigation"
+      ]
+    },
+    {
+      "id": "fraud:Investigation",
+      "type": "Entity",
+      "name": "Investigation",
+      "description": "Operational fraud investigation case for analyst workflow",
+      "identityKey": "caseId: string",
+      "humanRef": "caseId",
+      "attributes": {
+        "caseId": "string",
+        "txnId": "string",
+        "investigator": "string",
+        "caseStatus": "OPEN|IN_PROGRESS|PENDING_INFO|RESOLVED|CLOSED",
+        "assignedQueue": "FRAUD_L1|FRAUD_L2|AML|COMPLIANCE",
+        "priority": "LOW|MEDIUM|HIGH|URGENT",
+        "openedAt": "dateTime",
+        "closedAt": "dateTime",
+        "outcome": "CONFIRMED_FRAUD|FALSE_POSITIVE|INCONCLUSIVE",
+        "notes": "text"
+      },
+      "invariant": [
+        "caseId must be unique"
+      ],
+      "hasState": [
+        "fraud:InvestigationOpen",
+        "fraud:InvestigationInProgress",
+        "fraud:InvestigationClosed"
+      ],
+      "initialState": "fraud:InvestigationOpen",
+      "terminalStates": [
+        "fraud:InvestigationClosed"
+      ],
+      "relatesTo": [
+        "fraud:FraudAlert",
+        "fraud:Transaction",
+        "fraud:Customer",
+        "fraud:AuditTrail"
+      ]
+    },
+    {
+      "id": "fraud:FraudPattern",
+      "type": "Entity",
+      "name": "FraudPattern",
+      "description": "Known fraud pattern for detection and investigation",
+      "identityKey": "patternId: string",
+      "humanRef": "patternName",
+      "attributes": {
+        "patternId": "string",
+        "patternName": "string",
+        "patternType": "VELOCITY|AMOUNT|LOCATION|DEVICE|BEHAVIORAL|NETWORK",
+        "severity": "LOW|MEDIUM|HIGH|CRITICAL",
+        "detectionRate": "decimal",
+        "description": "text"
+      },
+      "invariant": [
+        "patternId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:Device",
+        "fraud:Merchant",
+        "fraud:Customer"
+      ]
+    },
+    {
+      "id": "fraud:AuditTrail",
+      "type": "Entity",
+      "name": "AuditTrail",
+      "description": "Complete audit trail for compliance and investigation",
+      "identityKey": "trailId: string",
+      "humanRef": "txnId",
+      "attributes": {
+        "trailId": "string",
+        "txnId": "string",
+        "events": "array",
+        "startTimestamp": "dateTime",
+        "endTimestamp": "dateTime",
+        "status": "ACTIVE|COMPLETED"
+      },
+      "invariant": [
+        "trailId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:Transaction",
+        "fraud:FraudDecision",
+        "fraud:AuditEvent"
+      ]
+    },
+    {
+      "id": "fraud:AuditEvent",
+      "type": "Entity",
+      "name": "AuditEvent",
+      "description": "Individual audit event for compliance tracking",
+      "identityKey": "eventId: string",
+      "humanRef": "eventType",
+      "attributes": {
+        "eventId": "string",
+        "eventType": "TRANSACTION_CREATED|AGENT_EXECUTED|DECISION_MADE|ALERT_CREATED|INVESTIGATION_OPENED",
+        "timestamp": "dateTime",
+        "actor": "string",
+        "actorType": "SYSTEM|AGENT|USER|API",
+        "action": "string",
+        "outcome": "SUCCESS|FAILURE"
+      },
+      "invariant": [
+        "eventId must be unique"
+      ],
+      "relatesTo": [
+        "fraud:AuditTrail"
+      ]
+    },
+    {
+      "id": "fraud:OWNS",
+      "type": "Operation",
+      "name": "OWNS",
+      "description": "Customer owns account",
+      "from": "fraud:Customer",
+      "to": "fraud:Account",
+      "precondition": [
+        "Customer must exist",
+        "Account must exist"
+      ],
+      "postcondition": [
+        "Ownership relationship established"
+      ]
+    },
+    {
+      "id": "fraud:INITIATES",
+      "type": "Operation",
+      "name": "INITIATES",
+      "description": "Account initiates transaction",
+      "from": "fraud:Account",
+      "to": "fraud:Transaction",
+      "precondition": [
+        "Account must be active",
+        "Transaction must be created"
+      ],
+      "postcondition": [
+        "Transaction linked to account"
+      ]
+    },
+    {
+      "id": "fraud:ORIGINATED_FROM",
+      "type": "Operation",
+      "name": "ORIGINATED_FROM",
+      "description": "Transaction originated from device",
+      "from": "fraud:Transaction",
+      "to": "fraud:Device",
+      "precondition": [
+        "Transaction must exist",
+        "Device must exist"
+      ],
+      "postcondition": [
+        "Device usage recorded"
+      ]
+    },
+    {
+      "id": "fraud:INVOLVES",
+      "type": "Operation",
+      "name": "INVOLVES",
+      "description": "Transaction involves merchant",
+      "from": "fraud:Transaction",
+      "to": "fraud:Merchant",
+      "precondition": [
+        "Transaction must exist",
+        "Merchant must exist"
+      ],
+      "postcondition": [
+        "Merchant relationship established"
+      ]
+    },
+    {
+      "id": "fraud:ASSOCIATED_WITH",
+      "type": "Operation",
+      "name": "ASSOCIATED_WITH",
+      "description": "Customer associated with device for fraud ring detection",
+      "from": "fraud:Customer",
+      "to": "fraud:Device",
+      "precondition": [
+        "Customer must exist",
+        "Device must exist"
+      ],
+      "postcondition": [
+        "Device-customer link established for investigation"
+      ]
+    },
+    {
+      "id": "fraud:ANALYZES",
+      "type": "Operation",
+      "name": "ANALYZES",
+      "description": "Fraud analysis analyzes transaction",
+      "from": "fraud:FraudAnalysis",
+      "to": "fraud:Transaction",
+      "precondition": [
+        "Transaction must be pending",
+        "Analysis must be initiated"
+      ],
+      "postcondition": [
+        "Analysis results generated"
+      ]
+    },
+    {
+      "id": "fraud:ANALYZES_TRANSACTION",
+      "type": "Operation",
+      "name": "ANALYZES_TRANSACTION",
+      "description": "Fraud agent analyzes transaction for per-agent reasoning",
+      "from": "fraud:FraudAgent",
+      "to": "fraud:Transaction",
+      "precondition": [
+        "Agent must be enabled",
+        "Transaction must be pending"
+      ],
+      "postcondition": [
+        "Agent analysis recorded"
+      ]
+    },
+    {
+      "id": "fraud:EVALUATES",
+      "type": "Operation",
+      "name": "EVALUATES",
+      "description": "Agent evaluates entity (Device or Customer) for specialized analysis",
+      "from": "fraud:FraudAgent",
+      "to": "fraud:Device|fraud:Customer",
+      "precondition": [
+        "Agent must be enabled",
+        "Entity must exist"
+      ],
+      "postcondition": [
+        "Entity evaluation recorded"
+      ]
+    },
+    {
+      "id": "fraud:GENERATED_BY",
+      "type": "Operation",
+      "name": "GENERATED_BY",
+      "description": "Agent result generated by fraud agent",
+      "from": "fraud:AgentResult",
+      "to": "fraud:FraudAgent",
+      "precondition": [
+        "Agent must execute",
+        "Analysis must be in progress"
+      ],
+      "postcondition": [
+        "Agent result linked to agent"
+      ]
+    },
+    {
+      "id": "fraud:CONTRIBUTES_TO",
+      "type": "Operation",
+      "name": "CONTRIBUTES_TO",
+      "description": "Agent result contributes to fraud decision",
+      "from": "fraud:AgentResult",
+      "to": "fraud:FraudDecision",
+      "precondition": [
+        "Agent result must exist",
+        "Decision must be pending"
+      ],
+      "postcondition": [
+        "Agent result factored into decision"
+      ]
+    },
+    {
+      "id": "fraud:SUPPORTS",
+      "type": "Operation",
+      "name": "SUPPORTS",
+      "description": "Agent result supports explanation for explainability lineage",
+      "from": "fraud:AgentResult",
+      "to": "fraud:Explanation",
+      "precondition": [
+        "Agent result must exist",
+        "Explanation must be generated"
+      ],
+      "postcondition": [
+        "Agent reasoning visible in explanation"
+      ]
+    },
+    {
+      "id": "fraud:GENERATED_FROM",
+      "type": "Operation",
+      "name": "GENERATED_FROM",
+      "description": "Decision generated from fraud analysis",
+      "from": "fraud:FraudDecision",
+      "to": "fraud:FraudAnalysis",
+      "precondition": [
+        "Analysis must be completed",
+        "All agent results available"
+      ],
+      "postcondition": [
+        "Decision finalized"
+      ]
+    },
+    {
+      "id": "fraud:EXPLAINS",
+      "type": "Operation",
+      "name": "EXPLAINS",
+      "description": "Explanation explains fraud decision",
+      "from": "fraud:Explanation",
+      "to": "fraud:FraudDecision",
+      "precondition": [
+        "Decision must exist"
+      ],
+      "postcondition": [
+        "Explanation generated"
+      ]
+    },
+    {
+      "id": "fraud:SUPPORTS_EXPLANATION",
+      "type": "Operation",
+      "name": "SUPPORTS_EXPLANATION",
+      "description": "Contributing factor supports explanation",
+      "from": "fraud:ContributingFactor",
+      "to": "fraud:Explanation",
+      "precondition": [
+        "Factor must be identified",
+        "Explanation must exist"
+      ],
+      "postcondition": [
+        "Factor linked to explanation"
+      ]
+    },
+    {
+      "id": "fraud:GENERATES_ALERT",
+      "type": "Operation",
+      "name": "GENERATES_ALERT",
+      "description": "Decision generates fraud alert",
+      "from": "fraud:FraudDecision",
+      "to": "fraud:FraudAlert",
+      "precondition": [
+        "Decision must indicate high risk"
+      ],
+      "postcondition": [
+        "Alert created for investigation"
+      ]
+    },
+    {
+      "id": "fraud:INVESTIGATES",
+      "type": "Operation",
+      "name": "INVESTIGATES",
+      "description": "Investigation investigates fraud alert",
+      "from": "fraud:Investigation",
+      "to": "fraud:FraudAlert",
+      "precondition": [
+        "Alert must be acknowledged"
+      ],
+      "postcondition": [
+        "Investigation opened"
+      ]
+    },
+    {
+      "id": "fraud:TRACKS",
+      "type": "Operation",
+      "name": "TRACKS",
+      "description": "Audit trail tracks fraud decision",
+      "from": "fraud:AuditTrail",
+      "to": "fraud:FraudDecision",
+      "precondition": [
+        "Decision must be made"
+      ],
+      "postcondition": [
+        "Audit trail maintained"
+      ]
+    },
+    {
+      "id": "fraud:RECORDED_IN",
+      "type": "Operation",
+      "name": "RECORDED_IN",
+      "description": "Audit event recorded in audit trail",
+      "from": "fraud:AuditEvent",
+      "to": "fraud:AuditTrail",
+      "precondition": [
+        "Event must occur",
+        "Trail must be active"
+      ],
+      "postcondition": [
+        "Event persisted in trail"
+      ]
+    },
+    {
+      "id": "fraud:DETECTED_IN",
+      "type": "Operation",
+      "name": "DETECTED_IN",
+      "description": "Fraud pattern detected in transaction",
+      "from": "fraud:FraudPattern",
+      "to": "fraud:Transaction",
+      "precondition": [
+        "Pattern must be defined",
+        "Transaction must match pattern"
+      ],
+      "postcondition": [
+        "Pattern match recorded"
+      ]
+    },
+    {
+      "id": "fraud:ASSOCIATED_WITH_DEVICE",
+      "type": "Operation",
+      "name": "ASSOCIATED_WITH_DEVICE",
+      "description": "Fraud pattern associated with device for device reuse detection",
+      "from": "fraud:FraudPattern",
+      "to": "fraud:Device",
+      "precondition": [
+        "Pattern must be detected",
+        "Device must be involved"
+      ],
+      "postcondition": [
+        "Device flagged for investigation"
+      ]
+    },
+    {
+      "id": "fraud:ASSOCIATED_WITH_MERCHANT",
+      "type": "Operation",
+      "name": "ASSOCIATED_WITH_MERCHANT",
+      "description": "Fraud pattern associated with merchant for suspicious merchant clustering",
+      "from": "fraud:FraudPattern",
+      "to": "fraud:Merchant",
+      "precondition": [
+        "Pattern must be detected",
+        "Merchant must be involved"
+      ],
+      "postcondition": [
+        "Merchant flagged for investigation"
+      ]
+    },
+    {
+      "id": "fraud:ASSOCIATED_WITH_CUSTOMER",
+      "type": "Operation",
+      "name": "ASSOCIATED_WITH_CUSTOMER",
+      "description": "Fraud pattern associated with customer for fraud ring detection",
+      "from": "fraud:FraudPattern",
+      "to": "fraud:Customer",
+      "precondition": [
+        "Pattern must be detected",
+        "Customer must be involved"
+      ],
+      "postcondition": [
+        "Customer flagged for investigation"
+      ]
+    },
+    {
+      "id": "fraud:TransactionPending",
+      "type": "State",
+      "name": "TransactionPending",
+      "description": "Transaction pending fraud analysis"
+    },
+    {
+      "id": "fraud:TransactionApproved",
+      "type": "State",
+      "name": "TransactionApproved",
+      "description": "Transaction approved"
+    },
+    {
+      "id": "fraud:TransactionRejected",
+      "type": "State",
+      "name": "TransactionRejected",
+      "description": "Transaction rejected"
+    },
+    {
+      "id": "fraud:TransactionFlagged",
+      "type": "State",
+      "name": "TransactionFlagged",
+      "description": "Transaction flagged for review"
+    },
+    {
+      "id": "fraud:AnalysisPending",
+      "type": "State",
+      "name": "AnalysisPending",
+      "description": "Analysis pending"
+    },
+    {
+      "id": "fraud:AnalysisInProgress",
+      "type": "State",
+      "name": "AnalysisInProgress",
+      "description": "Analysis in progress"
+    },
+    {
+      "id": "fraud:AnalysisCompleted",
+      "type": "State",
+      "name": "AnalysisCompleted",
+      "description": "Analysis completed"
+    },
+    {
+      "id": "fraud:DecisionPending",
+      "type": "State",
+      "name": "DecisionPending",
+      "description": "Decision pending"
+    },
+    {
+      "id": "fraud:DecisionMade",
+      "type": "State",
+      "name": "DecisionMade",
+      "description": "Decision made"
+    },
+    {
+      "id": "fraud:AlertNew",
+      "type": "State",
+      "name": "AlertNew",
+      "description": "Alert created"
+    },
+    {
+      "id": "fraud:AlertAcknowledged",
+      "type": "State",
+      "name": "AlertAcknowledged",
+      "description": "Alert acknowledged"
+    },
+    {
+      "id": "fraud:AlertInProgress",
+      "type": "State",
+      "name": "AlertInProgress",
+      "description": "Alert investigation in progress"
+    },
+    {
+      "id": "fraud:AlertResolved",
+      "type": "State",
+      "name": "AlertResolved",
+      "description": "Alert resolved"
+    },
+    {
+      "id": "fraud:InvestigationOpen",
+      "type": "State",
+      "name": "InvestigationOpen",
+      "description": "Investigation opened"
+    },
+    {
+      "id": "fraud:InvestigationInProgress",
+      "type": "State",
+      "name": "InvestigationInProgress",
+      "description": "Investigation in progress"
+    },
+    {
+      "id": "fraud:InvestigationClosed",
+      "type": "State",
+      "name": "InvestigationClosed",
+      "description": "Investigation closed"
+    }
+  ]
+}
