@@ -1,17 +1,20 @@
 package com.fraud.platform.model.nested;
 
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * Nested metadata used for internal fraud analysis payloads.
  */
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class MetadataInfo {

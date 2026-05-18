@@ -1,15 +1,16 @@
 package com.fraud.platform.repository;
 
-import com.fraud.platform.entity.Transaction;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.fraud.platform.entity.Transaction;
 
 /**
  * Repository interface for Transaction entity.
@@ -31,24 +32,24 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * Find transactions for a customer within a time range.
      */
     @Query("SELECT t FROM Transaction t WHERE t.customerId = :customerId " +
-           "AND t.timestamp BETWEEN :startTime AND :endTime " +
-           "ORDER BY t.timestamp DESC")
+            "AND t.timestamp BETWEEN :startTime AND :endTime " +
+            "ORDER BY t.timestamp DESC")
     List<Transaction> findByCustomerIdAndTimestampBetween(
-        @Param("customerId") String customerId,
-        @Param("startTime") LocalDateTime startTime,
-        @Param("endTime") LocalDateTime endTime
-    );
+            @Param("customerId") String customerId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
 
     /**
      * Count transactions for a customer within a time range.
      */
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.customerId = :customerId " +
-           "AND t.timestamp BETWEEN :startTime AND :endTime")
+            "AND t.txnId <> :txnId " +
+            "AND t.timestamp BETWEEN :startTime AND :endTime")
     Long countByCustomerIdAndTimestampBetween(
-        @Param("customerId") String customerId,
-        @Param("startTime") LocalDateTime startTime,
-        @Param("endTime") LocalDateTime endTime
-    );
+            @Param("customerId") String customerId,
+            @Param("txnId") String txnId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
 
     /**
      * Find transactions by status.
@@ -64,23 +65,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * Calculate average transaction amount for a customer within a time range.
      */
     @Query("SELECT AVG(t.amount) FROM Transaction t WHERE t.customerId = :customerId " +
-           "AND t.timestamp BETWEEN :startTime AND :endTime")
+            "AND t.txnId <> :txnId " +
+            "AND t.timestamp BETWEEN :startTime AND :endTime")
     BigDecimal calculateAverageAmountByCustomerIdAndTimestampBetween(
-        @Param("customerId") String customerId,
-        @Param("startTime") LocalDateTime startTime,
-        @Param("endTime") LocalDateTime endTime
-    );
+            @Param("customerId") String customerId,
+            @Param("txnId") String txnId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
 
     /**
      * Check if a device has been used by a customer before.
      */
     @Query("SELECT COUNT(t) > 0 FROM Transaction t WHERE t.customerId = :customerId " +
-           "AND t.deviceId = :deviceId AND t.timestamp < :beforeTime")
+            "AND t.deviceId = :deviceId AND t.timestamp < :beforeTime")
     boolean existsByCustomerIdAndDeviceIdBeforeTime(
-        @Param("customerId") String customerId,
-        @Param("deviceId") String deviceId,
-        @Param("beforeTime") LocalDateTime beforeTime
-    );
+            @Param("customerId") String customerId,
+            @Param("deviceId") String deviceId,
+            @Param("beforeTime") LocalDateTime beforeTime);
 
     /**
      * Count distinct customers using a device.

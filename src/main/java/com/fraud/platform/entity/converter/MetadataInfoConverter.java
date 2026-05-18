@@ -1,12 +1,17 @@
 package com.fraud.platform.entity.converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fraud.platform.model.nested.MetadataInfo;
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fraud.platform.model.nested.MetadataInfo;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * JPA converter for MetadataInfo to JSONB
@@ -15,10 +20,13 @@ import org.slf4j.LoggerFactory;
  */
 @Converter
 public class MetadataInfoConverter implements AttributeConverter<MetadataInfo, String> {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MetadataInfoConverter.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+    private static final ObjectMapper objectMapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
+
     @Override
     public String convertToDatabaseColumn(MetadataInfo attribute) {
         if (attribute == null) {
@@ -33,7 +41,7 @@ public class MetadataInfoConverter implements AttributeConverter<MetadataInfo, S
             throw new IllegalArgumentException("Error converting MetadataInfo to JSONB", e);
         }
     }
-    
+
     @Override
     public MetadataInfo convertToEntityAttribute(String dbData) {
         if (dbData == null || dbData.isEmpty()) {

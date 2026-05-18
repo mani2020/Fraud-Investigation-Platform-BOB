@@ -1,21 +1,25 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Risk-based fraud detection agent.
- * Analyzes transaction amount, merchant risk, payment type, customer history, and fraud signals.
+ * Analyzes transaction amount, merchant risk, payment type, customer history,
+ * and fraud signals.
  * Leverages nested data structure for enhanced fraud detection.
  */
 @Component
@@ -35,12 +39,10 @@ public class RiskAgent implements FraudAgent {
     private int historyDays;
 
     private static final List<String> HIGH_RISK_MERCHANTS = List.of(
-            "CRYPTO", "GAMBLING", "FOREX", "CASINO", "BETTING"
-    );
+            "CRYPTO", "GAMBLING", "FOREX", "CASINO", "BETTING");
 
     private static final List<String> HIGH_RISK_PAYMENT_TYPES = List.of(
-            "CRYPTO", "WIRE_TRANSFER", "INTERNATIONAL"
-    );
+            "CRYPTO", "WIRE_TRANSFER", "INTERNATIONAL");
 
     @Override
     public AgentResult analyze(CanonicalFraudEvent event) {
@@ -65,12 +67,69 @@ public class RiskAgent implements FraudAgent {
                 reasons.add("Suspicious transaction amount: " + amount);
             }
         }
+        /*
+         * Customer spending deviation analysis
+         */
+        if (event.getCustomer() != null
+                && event.getCustomer()
+                        .getAvgTransactionAmount() != null) {
+
+            BigDecimal avgAmount = event.getCustomer()
+                    .getAvgTransactionAmount();
+
+            if (avgAmount.compareTo(BigDecimal.ZERO) > 0) {
+
+                BigDecimal multiplier = amount.divide(
+                        avgAmount,
+                        2,
+                        RoundingMode.HALF_UP);
+
+                /*
+                 * Extremely abnormal transaction
+                 */
+                if (multiplier.compareTo(
+                        BigDecimal.valueOf(10)) >= 0) {
+
+                    riskScore = riskScore.add(
+                            BigDecimal.valueOf(50));
+
+                    reasons.add(
+                            "Transaction amount exceeds 10x customer average");
+                }
+
+                /*
+                 * Highly abnormal transaction
+                 */
+                else if (multiplier.compareTo(
+                        BigDecimal.valueOf(5)) >= 0) {
+
+                    riskScore = riskScore.add(
+                            BigDecimal.valueOf(35));
+
+                    reasons.add(
+                            "Transaction amount exceeds 5x customer average");
+                }
+
+                /*
+                 * Moderately abnormal transaction
+                 */
+                else if (multiplier.compareTo(
+                        BigDecimal.valueOf(3)) >= 0) {
+
+                    riskScore = riskScore.add(
+                            BigDecimal.valueOf(20));
+
+                    reasons.add(
+                            "Transaction amount exceeds 3x customer average");
+                }
+            }
+        }
 
         // Check merchant risk using nested merchant data
         if (event.getMerchantInfo() != null) {
             String merchantName = event.getMerchantInfo().getMerchantName();
             String merchantCategory = event.getMerchantInfo().getMerchantCategory();
-            
+
             if (merchantName != null) {
                 String merchant = merchantName.toUpperCase();
                 for (String riskMerchant : HIGH_RISK_MERCHANTS) {
@@ -81,7 +140,7 @@ public class RiskAgent implements FraudAgent {
                     }
                 }
             }
-            
+
             // Additional check using merchant category field
             if (merchantCategory != null) {
                 String category = merchantCategory.toUpperCase();
@@ -98,6 +157,12 @@ public class RiskAgent implements FraudAgent {
         // Check payment type risk using nested transaction data
         if (event.getTransaction() != null && event.getTransaction().getPaymentType() != null) {
             String paymentType = event.getTransaction().getPaymentType().toUpperCase();
+            // Check for crypto transactions
+            if (paymentType.contains("CRYPTO")) {
+                riskScore = riskScore.add(BigDecimal.valueOf(30));
+                reasons.add("Crypto transaction detected");
+            }
+            // Check for high-risk payment types
             for (String riskType : HIGH_RISK_PAYMENT_TYPES) {
                 if (paymentType.contains(riskType)) {
                     riskScore = riskScore.add(BigDecimal.valueOf(20));
@@ -105,6 +170,7 @@ public class RiskAgent implements FraudAgent {
                     break;
                 }
             }
+
         }
 
         // Check fraud signals for blacklisted merchant
@@ -115,6 +181,7 @@ public class RiskAgent implements FraudAgent {
 
         // Check behavior metrics for velocity
         if (event.getBehaviorMetrics() != null) {
+            log.info("Behavior metrics runtime: {}", event.getBehaviorMetrics());
             Integer txnCount24h = event.getBehaviorMetrics().getTransactionCount24h();
             if (txnCount24h != null && txnCount24h > 20) {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
@@ -131,9 +198,9 @@ public class RiskAgent implements FraudAgent {
                 LocalDateTime historyStart = timestamp.minusDays(historyDays);
                 BigDecimal avgAmount = transactionRepository.calculateAverageAmountByCustomerIdAndTimestampBetween(
                         customerId,
+                        event.getTxnId(),
                         historyStart,
-                        timestamp
-                );
+                        timestamp);
 
                 if (avgAmount != null && avgAmount.compareTo(BigDecimal.ZERO) > 0) {
                     // Check if transaction amount is 10x the average

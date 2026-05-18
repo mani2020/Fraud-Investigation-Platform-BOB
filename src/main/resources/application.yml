@@ -1,3 +1,10 @@
+ica:
+  context-studio:
+    base-url: https://servicesessentials.ibm.com
+    context-id: ${ICA_CONTEXT_ID}
+    api-key: ${ICA_CONTEXT_API_KEY}
+    mcp-gateway-token: ${MCP_GATEWAY_TOKEN}
+
 spring:
   application:
     name: fraud-investigation-platform
@@ -79,9 +86,11 @@ logging:
     com.fraud.platform.orchestrator: INFO
     com.fraud.platform.agents: INFO
     com.fraud.platform.service: INFO
+    com.fraud.platform.service.ICAContextService: DEBUG
     com.fraud.platform.kafka: INFO
     org.springframework: INFO
     org.springframework.web: INFO
+    org.springframework.web.client.RestTemplate: DEBUG
     org.springframework.kafka: WARN
     org.apache.kafka: WARN
     org.hibernate: WARN
@@ -98,6 +107,11 @@ logging:
 
 # Fraud Detection Configuration
 fraud:
+  critical-rules:
+    block-blacklisted-merchant: true
+    block-blacklisted-ip: true
+    block-tor-browser: true
+    block-vpn-proxy-combo: true
   thresholds:
     high-value: 100000
     suspicious-value: 50000
@@ -128,10 +142,10 @@ fraud:
       deviation-threshold: 3.0
   
   decision:
-    approve-threshold: 30
-    otp-threshold: 50
-    hold-threshold: 70
-    block-threshold: 85
+    approve-threshold: 15
+    otp-threshold: 30
+    hold-threshold: 50
+    block-threshold: 70
       
   orchestrator:
     timeout-seconds: 5
@@ -166,7 +180,7 @@ kafka:
     # Default schema version for backward compatibility
     # v1: Legacy flat format (TransactionEvent)
     # v2: Nested format (CanonicalFraudEvent)
-    default-schema-version: v1
+    default-schema-version: v2
     
     # Version-specific consumer groups
     # v1 consumers use: fraud-platform-group

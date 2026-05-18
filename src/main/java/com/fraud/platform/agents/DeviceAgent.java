@@ -1,19 +1,22 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Device fingerprinting fraud detection agent.
- * Analyzes device ID, trust status, fingerprints, VPN/proxy detection, and device history.
+ * Analyzes device ID, trust status, fingerprints, VPN/proxy detection, and
+ * device history.
  * Leverages nested device data and fraud signals for enhanced detection.
  */
 @Component
@@ -25,8 +28,7 @@ public class DeviceAgent implements FraudAgent {
 
     private static final List<String> SUSPICIOUS_DEVICE_PATTERNS = List.of(
             "UNKNOWN", "EMULATOR", "ROOTED", "JAILBROKEN",
-            "VPN", "PROXY", "TOR", "ANONYMOUS"
-    );
+            "VPN", "PROXY", "TOR", "ANONYMOUS");
 
     @Override
     public AgentResult analyze(CanonicalFraudEvent event) {
@@ -70,8 +72,7 @@ public class DeviceAgent implements FraudAgent {
                     boolean isKnownDevice = transactionRepository.existsByCustomerIdAndDeviceIdBeforeTime(
                             customerId,
                             deviceId,
-                            event.getTimestamp()
-                    );
+                            event.getTimestamp());
 
                     if (!isKnownDevice) {
                         riskScore = riskScore.add(BigDecimal.valueOf(30));
@@ -101,6 +102,16 @@ public class DeviceAgent implements FraudAgent {
 
         // Check nested device data for enhanced detection
         if (event.getDevice() != null) {
+            String userAgent = event.getDevice().getUserAgent();
+            // Check for TOR browser
+            if (userAgent != null
+                    && userAgent.toLowerCase().contains("tor")) {
+
+                riskScore = riskScore.add(BigDecimal.valueOf(50));
+
+                reasons.add("TOR browser detected");
+            }
+
             // Check device trust status
             if (Boolean.FALSE.equals(event.getDevice().getIsTrusted())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(40));

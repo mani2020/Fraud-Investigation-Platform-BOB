@@ -1,20 +1,29 @@
 package com.fraud.platform.mapper;
 
-import com.fraud.platform.kafka.events.TransactionEvent;
-import com.fraud.platform.kafka.events.TransactionEventV2;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.model.TransactionRequest;
-import com.fraud.platform.model.nested.*;
-import com.fraud.platform.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.kafka.events.TransactionEvent;
+import com.fraud.platform.kafka.events.TransactionEventV2;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.model.TransactionRequest;
+import com.fraud.platform.model.nested.BehaviorMetrics;
+import com.fraud.platform.model.nested.CustomerInfo;
+import com.fraud.platform.model.nested.DeviceInfo;
+import com.fraud.platform.model.nested.FraudSignals;
+import com.fraud.platform.model.nested.LocationInfo;
+import com.fraud.platform.model.nested.MerchantInfo;
+import com.fraud.platform.model.nested.MetadataInfo;
+import com.fraud.platform.model.nested.TransactionInfo;
+import com.fraud.platform.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Mapper for transforming between different transaction payload formats.
@@ -278,7 +287,7 @@ public class TransactionEventMapper {
                     .txnId(canonical.getTxnId())
                     .customerId(canonical.getCustomerId())
                     .amount(canonical.getAmount())
-                    .merchant(canonical.getMerchant())
+                    .merchant(canonical.getMerchantName())
                     .country(canonical.getCountry())
                     .deviceId(canonical.getDeviceId())
                     .paymentType(canonical.getPaymentType())
@@ -468,7 +477,7 @@ public class TransactionEventMapper {
 
             // Count transactions in last 24 hours
             Long txnCount24h = transactionRepository.countByCustomerIdAndTimestampBetween(
-                    customerId, twentyFourHoursAgo, now);
+                    customerId,event.getTxnId(),twentyFourHoursAgo, now);
             builder.transactionCount24h(txnCount24h != null ? txnCount24h.intValue() : 0);
 
             // Calculate velocity score (simple: txn count / 24)

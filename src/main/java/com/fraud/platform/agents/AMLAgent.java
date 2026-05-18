@@ -1,21 +1,24 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Anti-Money Laundering (AML) fraud detection agent.
- * Analyzes transaction patterns, merchant categories, customer risk profiles, and velocity for money laundering indicators.
+ * Analyzes transaction patterns, merchant categories, customer risk profiles,
+ * and velocity for money laundering indicators.
  * Leverages nested data structure and fraud signals for enhanced AML detection.
  */
 @Component
@@ -39,14 +42,12 @@ public class AMLAgent implements FraudAgent {
             "CRYPTO", "CRYPTOCURRENCY", "BITCOIN", "ETHEREUM", "BLOCKCHAIN",
             "EXCHANGE", "CASINO", "GAMBLING", "BETTING",
             "MONEY_TRANSFER", "REMITTANCE", "FOREX", "GOLD", "JEWELRY",
-            "PAWN", "AUCTION", "DEALER", "BROKER", "NFT", "DEFI"
-    );
+            "PAWN", "AUCTION", "DEALER", "BROKER", "NFT", "DEFI");
 
     // Cash-intensive businesses (higher AML risk)
     private static final List<String> CASH_INTENSIVE_MERCHANTS = List.of(
             "ATM", "CASH", "CHECK_CASHING", "PAYDAY", "LOAN",
-            "BAR", "NIGHTCLUB", "LIQUOR", "TOBACCO", "VAPE"
-    );
+            "BAR", "NIGHTCLUB", "LIQUOR", "TOBACCO", "VAPE");
 
     @Override
     public AgentResult analyze(CanonicalFraudEvent event) {
@@ -73,7 +74,7 @@ public class AMLAgent implements FraudAgent {
         if (event.getBehaviorMetrics() != null) {
             Integer txnCount24h = event.getBehaviorMetrics().getTransactionCount24h();
             BigDecimal totalAmount24h = event.getBehaviorMetrics().getTotalAmount24h();
-            
+
             if (txnCount24h != null && txnCount24h >= velocityCountThreshold * 2) {
                 riskScore = riskScore.add(BigDecimal.valueOf(45));
                 reasons.add("Very high velocity: " + txnCount24h + " transactions in 24h");
@@ -81,7 +82,7 @@ public class AMLAgent implements FraudAgent {
                 riskScore = riskScore.add(BigDecimal.valueOf(30));
                 reasons.add("High velocity: " + txnCount24h + " transactions in 24h");
             }
-            
+
             if (totalAmount24h != null && totalAmount24h.compareTo(dailyAmountThreshold) >= 0) {
                 riskScore = riskScore.add(BigDecimal.valueOf(35));
                 reasons.add("High daily transaction volume: " + totalAmount24h);
@@ -93,16 +94,17 @@ public class AMLAgent implements FraudAgent {
             LocalDateTime velocityStart = timestamp.minusMinutes(velocityMinutes);
             long recentTxnCount = transactionRepository.countByCustomerIdAndTimestampBetween(
                     customerId,
+                    event.getTxnId(),
                     velocityStart,
-                    timestamp
-            );
+                    timestamp);
 
             if (recentTxnCount >= velocityCountThreshold) {
                 riskScore = riskScore.add(BigDecimal.valueOf(40));
                 reasons.add("High velocity: " + recentTxnCount + " transactions in " + velocityMinutes + " minutes");
             } else if (recentTxnCount >= velocityCountThreshold / 2) {
                 riskScore = riskScore.add(BigDecimal.valueOf(20));
-                reasons.add("Moderate velocity: " + recentTxnCount + " transactions in " + velocityMinutes + " minutes");
+                reasons.add(
+                        "Moderate velocity: " + recentTxnCount + " transactions in " + velocityMinutes + " minutes");
             }
         }
 
@@ -111,7 +113,7 @@ public class AMLAgent implements FraudAgent {
             BigDecimal reportingThreshold = BigDecimal.valueOf(10000);
             BigDecimal structuringRange = BigDecimal.valueOf(500);
             if (amount.compareTo(reportingThreshold.subtract(structuringRange)) >= 0 &&
-                amount.compareTo(reportingThreshold) < 0) {
+                    amount.compareTo(reportingThreshold) < 0) {
                 riskScore = riskScore.add(BigDecimal.valueOf(30));
                 reasons.add("Potential structuring: amount just below reporting threshold");
             }
@@ -190,6 +192,7 @@ public class AMLAgent implements FraudAgent {
         } else {
             decision = "APPROVE";
         }
+
 
         long processingTime = System.currentTimeMillis() - startTime;
 

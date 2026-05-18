@@ -1,21 +1,24 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Behavioral analysis fraud detection agent.
- * Analyzes customer behavior patterns, timing anomalies, transaction velocity, and amount deviations.
+ * Analyzes customer behavior patterns, timing anomalies, transaction velocity,
+ * and amount deviations.
  * Leverages nested behavior metrics and customer data for enhanced detection.
  */
 @Component
@@ -46,9 +49,10 @@ public class BehaviorAgent implements FraudAgent {
 
         // Check behavior metrics first (if available)
         if (event.getBehaviorMetrics() != null) {
+            log.info(  "Behavior metrics runtime: {}",   event.getBehaviorMetrics());
             Integer txnCount24h = event.getBehaviorMetrics().getTransactionCount24h();
             BigDecimal totalAmount24h = event.getBehaviorMetrics().getTotalAmount24h();
-            
+
             // Check transaction velocity
             if (txnCount24h != null) {
                 if (txnCount24h > 20) {
@@ -59,25 +63,25 @@ public class BehaviorAgent implements FraudAgent {
                     reasons.add("High transaction velocity: " + txnCount24h + " in 24h");
                 }
             }
-            
+
             // Check amount velocity
             if (totalAmount24h != null && totalAmount24h.compareTo(BigDecimal.valueOf(100000)) >= 0) {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
                 reasons.add("High transaction volume in 24h: " + totalAmount24h);
             }
-            
+
             // Check for unusual time
             if (Boolean.TRUE.equals(event.getBehaviorMetrics().getUnusualTime())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(20));
                 reasons.add("Transaction at unusual time detected");
             }
-            
+
             // Check for unusual amount
             if (Boolean.TRUE.equals(event.getBehaviorMetrics().getUnusualAmount())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
                 reasons.add("Unusual transaction amount detected");
             }
-            
+
             // Check for unusual location
             if (Boolean.TRUE.equals(event.getBehaviorMetrics().getUnusualLocation())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(30));
@@ -105,9 +109,9 @@ public class BehaviorAgent implements FraudAgent {
             LocalDateTime thirtyDaysAgo = timestamp.minusDays(30);
             long historicalTxnCount = transactionRepository.countByCustomerIdAndTimestampBetween(
                     customerId,
+                    event.getTxnId(),
                     thirtyDaysAgo,
-                    timestamp
-            );
+                    timestamp);
 
             if (historicalTxnCount == 0) {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
@@ -118,23 +122,25 @@ public class BehaviorAgent implements FraudAgent {
             LocalDateTime burstStart = timestamp.minusMinutes(burstMinutes);
             long burstTxnCount = transactionRepository.countByCustomerIdAndTimestampBetween(
                     customerId,
+                    event.getTxnId(),
                     burstStart,
-                    timestamp
-            );
+                    timestamp);
 
             if (burstTxnCount >= burstCountThreshold * 2) {
                 riskScore = riskScore.add(BigDecimal.valueOf(30));
-                reasons.add("Rapid transaction burst: " + burstTxnCount + " transactions in " + burstMinutes + " minutes");
+                reasons.add(
+                        "Rapid transaction burst: " + burstTxnCount + " transactions in " + burstMinutes + " minutes");
             } else if (burstTxnCount >= burstCountThreshold) {
                 riskScore = riskScore.add(BigDecimal.valueOf(20));
-                reasons.add("Elevated transaction frequency: " + burstTxnCount + " transactions in " + burstMinutes + " minutes");
+                reasons.add("Elevated transaction frequency: " + burstTxnCount + " transactions in " + burstMinutes
+                        + " minutes");
             }
         }
 
         // Check timing patterns
         if (timestamp != null) {
             int hour = timestamp.getHour();
-            
+
             // Check for unusual time (late night/early morning transactions)
             if (hour >= 0 && hour < 6) {
                 riskScore = riskScore.add(BigDecimal.valueOf(15));
@@ -153,13 +159,14 @@ public class BehaviorAgent implements FraudAgent {
                 reasons.add("Weekend transaction");
             }
 
-            // Check for holiday transactions (simplified - check if it's a public holiday pattern)
+            // Check for holiday transactions (simplified - check if it's a public holiday
+            // pattern)
             int dayOfMonth = timestamp.getDayOfMonth();
             int month = timestamp.getMonthValue();
             if ((month == 1 && dayOfMonth == 1) || // New Year
-                (month == 8 && dayOfMonth == 15) || // Independence Day
-                (month == 10 && dayOfMonth == 2) || // Gandhi Jayanti
-                (month == 12 && dayOfMonth == 25)) { // Christmas
+                    (month == 8 && dayOfMonth == 15) || // Independence Day
+                    (month == 10 && dayOfMonth == 2) || // Gandhi Jayanti
+                    (month == 12 && dayOfMonth == 25)) { // Christmas
                 riskScore = riskScore.add(BigDecimal.valueOf(10));
                 reasons.add("Transaction on public holiday");
             }

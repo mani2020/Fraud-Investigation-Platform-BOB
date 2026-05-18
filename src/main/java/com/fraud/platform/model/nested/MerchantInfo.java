@@ -1,5 +1,9 @@
 package com.fraud.platform.model.nested;
 
+import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -8,13 +12,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 /**
  * Nested merchant details used for internal fraud analysis payloads.
  */
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class MerchantInfo {

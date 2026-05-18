@@ -1,18 +1,5 @@
 package com.fraud.platform.orchestrator;
 
-import com.fraud.platform.agents.*;
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import com.fraud.platform.model.FraudAlert;
-import com.fraud.platform.model.FraudDecision;
-import com.fraud.platform.service.DecisionService;
-import com.fraud.platform.service.ExplainabilityService;
-import com.fraud.platform.service.FraudNotificationService;
-import com.fraud.platform.service.TransactionService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -23,11 +10,32 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Orchestrates fraud detection by coordinating multiple fraud analysis agents.
- * Aggregates agent results into a final fraud decision with explainable AI.
- */
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import com.fraud.platform.agents.AMLAgent;
+import com.fraud.platform.agents.BehaviorAgent;
+import com.fraud.platform.agents.DeviceAgent;
+import com.fraud.platform.agents.GeoAgent;
+import com.fraud.platform.agents.RiskAgent;
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+import com.fraud.platform.model.FraudAlert;
+import com.fraud.platform.model.FraudDecision;
+import com.fraud.platform.service.DecisionService;
+import com.fraud.platform.service.ExplainabilityService;
+import com.fraud.platform.service.FraudNotificationService;
+import com.fraud.platform.service.ICAContextService;
+import com.fraud.platform.service.TransactionService;
+
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -38,106 +46,196 @@ public class FraudOrchestratorService {
     private final DeviceAgent deviceAgent;
     private final AMLAgent amlAgent;
     private final BehaviorAgent behaviorAgent;
+
     private final TransactionService transactionService;
     private final ExplainabilityService explainabilityService;
     private final DecisionService decisionService;
     private final FraudNotificationService notificationService;
+    private final ICAContextService icaContextService;
 
-    // Thread pool for parallel agent execution
+    /**
+     * Thread pool for parallel fraud agent execution.
+     */
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     /**
      * Analyze transaction using all fraud detection agents.
      * Agents run in parallel for optimal performance.
      *
-     * @param event Canonical fraud event to analyze
-     * @return Final fraud decision with aggregated results
+     * @param event Canonical fraud event
+     * @return Final fraud decision
      */
-    public FraudDecision analyzeTransaction(CanonicalFraudEvent event) {
+    @Transactional(rollbackFor = Exception.class)
+    public FraudDecision analyzeTransaction(
+            CanonicalFraudEvent event) {
+
         long startTime = System.currentTimeMillis();
-        log.info("Starting fraud analysis for transaction: {}", event.getTxnId());
+
+        log.info(
+                "Starting fraud analysis for transaction: {}",
+                event.getTxnId());
 
         try {
-            // Execute all agents in parallel
+
+            /*
+             * Execute agents in parallel
+             */
             CompletableFuture<AgentResult> riskFuture = CompletableFuture.supplyAsync(
-                    () -> riskAgent.analyze(event), executorService);
-            
+                    () -> riskAgent.analyze(event),
+                    executorService);
+
             CompletableFuture<AgentResult> geoFuture = CompletableFuture.supplyAsync(
-                    () -> geoAgent.analyze(event), executorService);
-            
+                    () -> geoAgent.analyze(event),
+                    executorService);
+
             CompletableFuture<AgentResult> deviceFuture = CompletableFuture.supplyAsync(
-                    () -> deviceAgent.analyze(event), executorService);
-            
+                    () -> deviceAgent.analyze(event),
+                    executorService);
+
             CompletableFuture<AgentResult> amlFuture = CompletableFuture.supplyAsync(
-                    () -> amlAgent.analyze(event), executorService);
-            
+                    () -> amlAgent.analyze(event),
+                    executorService);
+
             CompletableFuture<AgentResult> behaviorFuture = CompletableFuture.supplyAsync(
-                    () -> behaviorAgent.analyze(event), executorService);
+                    () -> behaviorAgent.analyze(event),
+                    executorService);
 
-            // Wait for all agents to complete
-            CompletableFuture.allOf(riskFuture, geoFuture, deviceFuture, amlFuture, behaviorFuture).join();
+            /*
+             * Wait for all agents
+             */
+            CompletableFuture.allOf(
+                    riskFuture,
+                    geoFuture,
+                    deviceFuture,
+                    amlFuture,
+                    behaviorFuture).get(5, TimeUnit.SECONDS);
 
-            // Collect agent results
+            /*
+             * Collect results
+             */
             List<AgentResult> agentResults = new ArrayList<>();
+
             agentResults.add(riskFuture.get());
             agentResults.add(geoFuture.get());
             agentResults.add(deviceFuture.get());
             agentResults.add(amlFuture.get());
             agentResults.add(behaviorFuture.get());
 
-            // Aggregate results into final decision
-            FraudDecision decision = aggregateResults(event.getTxnId(), agentResults);
-            decision.setTimestamp(LocalDateTime.now());
-            decision.setTotalProcessingTimeMs(System.currentTimeMillis() - startTime);
+            /*
+             * Aggregate results
+             */
+            FraudDecision decision = aggregateResults(
+                    event.getTxnId(),
+                    agentResults);
 
-            // Make final decision using DecisionService
+            decision.setTimestamp(LocalDateTime.now());
+
+            decision.setTotalProcessingTimeMs(
+                    System.currentTimeMillis() - startTime);
+
+            /*
+             * Final decision
+             */
             String finalDecision = decisionService.makeDecision(decision);
+
             decision.setDecision(finalDecision);
 
-            // Generate human-readable explanations
-            String explanation = explainabilityService.generateExplanation(decision);
-            String summary = explainabilityService.generateShortSummary(decision);
-            decision.setHumanReadableExplanation(explanation);
+            /*
+             * Explainability
+             */
+            String explanation = explainabilityService
+                    .generateExplanation(decision);
+
+            String summary = explainabilityService
+                    .generateShortSummary(decision);
+
+            decision.setHumanReadableExplanation(
+                    explanation);
+
             decision.setShortSummary(summary);
 
-            // Log decision matrix
-            String decisionMatrix = decisionService.generateSimpleTable(decision);
-            log.info("Fraud analysis completed for {}:\n{}", event.getTxnId(), decisionMatrix);
+            /*
+             * Log matrix
+             */
+            String decisionMatrix = decisionService
+                    .generateSimpleTable(decision);
+
+            log.info(
+                    "Fraud analysis completed for {}:\n{}",
+                    event.getTxnId(),
+                    decisionMatrix);
+
             log.info("Summary: {}", summary);
 
-            // Update transaction with fraud decision
-            updateTransaction(event.getTxnId(), decision);
+            /*
+             * DB updates
+             */
+            updateTransaction(
+                    event.getTxnId(),
+                    decision);
 
-            // Create fraud alert for dashboard
             createFraudAlert(decision);
+
+            /*
+             * ICA ingestion after successful commit
+             */
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+
+                                @Override
+                                public void afterCommit() {
+
+                                    CompletableFuture.runAsync(() -> {
+
+                                        try {
+
+                                            icaContextService
+                                                    .ingestTransaction(
+                                                            event,
+                                                            decision);
+
+                                            log.info(
+                                                    "ICA ingestion completed for txn: {}",
+                                                    event.getTxnId());
+
+                                        } catch (Exception ex) {
+
+                                            log.error(
+                                                    "ICA ingestion failed for txn: {}",
+                                                    event.getTxnId(),
+                                                    ex);
+                                        }
+
+                                    });
+                                }
+                            });
 
             return decision;
 
         } catch (Exception e) {
-            log.error("Error during fraud analysis for transaction: {}", event.getTxnId(), e);
-            
-            // Return safe default decision on error
-            return FraudDecision.builder()
-                    .txnId(event.getTxnId())
-                    .finalScore(BigDecimal.valueOf(100))
-                    .decision("REVIEW")
-                    .allReasons(List.of("Error during fraud analysis: " + e.getMessage()))
-                    .timestamp(LocalDateTime.now())
-                    .totalProcessingTimeMs(System.currentTimeMillis() - startTime)
-                    .confidence(BigDecimal.ZERO)
-                    .build();
+
+            log.error(
+                    "Error during fraud analysis for transaction: {}",
+                    event.getTxnId(),
+                    e);
+
+            /*
+             * Force rollback
+             */
+            throw new RuntimeException(
+                    "Fraud analysis failed",
+                    e);
         }
     }
 
     /**
-     * Aggregate agent results into final fraud decision.
-     * Uses weighted average of agent scores.
-     *
-     * @param txnId Transaction ID
-     * @param agentResults Results from all agents
-     * @return Final fraud decision
+     * Aggregate all agent results.
      */
-    private FraudDecision aggregateResults(String txnId, List<AgentResult> agentResults) {
+    private FraudDecision aggregateResults(
+            String txnId,
+            List<AgentResult> agentResults) {
+
         FraudDecision decision = FraudDecision.builder()
                 .txnId(txnId)
                 .agentResults(new ArrayList<>())
@@ -145,164 +243,186 @@ public class FraudOrchestratorService {
                 .riskFactors(new HashMap<>())
                 .build();
 
-        // Calculate weighted average score
         BigDecimal totalWeightedScore = BigDecimal.ZERO;
         BigDecimal totalWeight = BigDecimal.ZERO;
         BigDecimal totalConfidence = BigDecimal.ZERO;
 
         Map<String, Integer> decisionCounts = new HashMap<>();
+
         decisionCounts.put("APPROVE", 0);
-        decisionCounts.put("REVIEW", 0);
-        decisionCounts.put("REJECT", 0);
+        decisionCounts.put("OTP", 0);
+        decisionCounts.put("HOLD", 0);
+        decisionCounts.put("BLOCK", 0);
 
         for (AgentResult result : agentResults) {
+
             decision.addAgentResult(result);
 
-            // Get agent weight
             double weight = getAgentWeight(result.getAgentName());
+
             BigDecimal agentWeight = BigDecimal.valueOf(weight);
 
-            // Calculate weighted score
-            BigDecimal weightedScore = result.getRiskScore().multiply(agentWeight);
+            BigDecimal weightedScore = result.getRiskScore()
+                    .multiply(agentWeight);
+
             totalWeightedScore = totalWeightedScore.add(weightedScore);
+
             totalWeight = totalWeight.add(agentWeight);
 
-            // Aggregate confidence
-            totalConfidence = totalConfidence.add(result.getConfidence());
+            totalConfidence = totalConfidence.add(
+                    result.getConfidence());
 
-            // Count decisions
             String agentDecision = result.getDecision();
-            decisionCounts.put(agentDecision, decisionCounts.get(agentDecision) + 1);
 
-            // Add to risk factors
-            decision.getRiskFactors().put(result.getAgentName() + "_score", result.getRiskScore());
-            decision.getRiskFactors().put(result.getAgentName() + "_decision", result.getDecision());
+            decisionCounts.put(
+                    agentDecision,
+                    decisionCounts.getOrDefault(agentDecision, 0) + 1);
+
+            decision.getRiskFactors().put(
+                    result.getAgentName() + "_score",
+                    result.getRiskScore());
+
+            decision.getRiskFactors().put(
+                    result.getAgentName() + "_decision",
+                    result.getDecision());
+
+            /*
+             * Critical fraud indicators
+             */
+            for (String reason : result.getReasons()) {
+
+                String lower = reason.toLowerCase();
+
+                if (lower.contains("blacklisted merchant")) {
+                    decision.getRiskFactors().put("blacklistedMerchant", true);
+                }
+
+                if (lower.contains("blacklisted ip")) {
+                    decision.getRiskFactors().put("blacklistedIp", true);
+                }
+
+                if (lower.contains("vpn")) {
+                    decision.getRiskFactors().put("vpnDetected", true);
+                }
+
+                if (lower.contains("proxy")) {
+                    decision.getRiskFactors().put("proxyDetected", true);
+                }
+
+                if (lower.contains("tor")) {
+                    decision.getRiskFactors().put("torDetected", true);
+                }
+            }
         }
 
-        // Calculate final score (weighted average)
-        BigDecimal finalScore = totalWeightedScore.divide(totalWeight, 2, RoundingMode.HALF_UP);
-        
-        // Cap final score at 100 to prevent scores exceeding 100%
-        if (finalScore.compareTo(BigDecimal.valueOf(100)) > 0) {
-            log.warn("Final fraud score {} exceeded 100, capping at 100 for transaction: {}",
-                    finalScore, txnId);
+        // Calculate final score and confidence
+        BigDecimal finalScore = totalWeightedScore.divide(
+                totalWeight,
+                2,
+                RoundingMode.HALF_UP);
+
+        if (finalScore.compareTo(
+                BigDecimal.valueOf(100)) > 0) {
+
             finalScore = BigDecimal.valueOf(100);
         }
-        
+
         decision.setFinalScore(finalScore);
 
-        // Calculate average confidence
         BigDecimal avgConfidence = totalConfidence.divide(
-                BigDecimal.valueOf(agentResults.size()), 2, RoundingMode.HALF_UP);
-        decision.setConfidence(avgConfidence);
+                BigDecimal.valueOf(agentResults.size()),
+                2,
+                RoundingMode.HALF_UP);
 
-        // Determine final decision based on score and agent consensus
-        String finalDecision = determineFinalDecision(finalScore, decisionCounts);
-        decision.setDecision(finalDecision);
+        decision.setConfidence(avgConfidence);
 
         return decision;
     }
 
     /**
-     * Determine final decision based on score and agent consensus.
-     *
-     * @param finalScore Weighted average score
-     * @param decisionCounts Count of each decision type
-     * @return Final decision
-     */
-    private String determineFinalDecision(BigDecimal finalScore, Map<String, Integer> decisionCounts) {
-        // If any agent says REJECT and score is high, reject
-        if (decisionCounts.get("REJECT") > 0 && finalScore.compareTo(BigDecimal.valueOf(60)) >= 0) {
-            return "REJECT";
-        }
-
-        // If majority says REJECT, reject
-        if (decisionCounts.get("REJECT") >= 3) {
-            return "REJECT";
-        }
-
-        // If score is very high, reject regardless of agent decisions
-        if (finalScore.compareTo(BigDecimal.valueOf(70)) >= 0) {
-            return "REJECT";
-        }
-
-        // If score is moderate or any agent says REVIEW, review
-        if (finalScore.compareTo(BigDecimal.valueOf(40)) >= 0 || decisionCounts.get("REVIEW") > 0) {
-            return "REVIEW";
-        }
-
-        // Otherwise approve
-        return "APPROVE";
-    }
-
-    /**
-     * Get agent weight by name.
-     *
-     * @param agentName Agent name
-     * @return Agent weight
+     * Agent weight lookup.
      */
     private double getAgentWeight(String agentName) {
+
         return switch (agentName) {
-            case "RiskAgent" -> riskAgent.getWeight();
-            case "GeoAgent" -> geoAgent.getWeight();
-            case "DeviceAgent" -> deviceAgent.getWeight();
-            case "AMLAgent" -> amlAgent.getWeight();
-            case "BehaviorAgent" -> behaviorAgent.getWeight();
-            default -> 0.2; // Default weight
+
+            case "RiskAgent" ->
+                riskAgent.getWeight();
+
+            case "GeoAgent" ->
+                geoAgent.getWeight();
+
+            case "DeviceAgent" ->
+                deviceAgent.getWeight();
+
+            case "AMLAgent" ->
+                amlAgent.getWeight();
+
+            case "BehaviorAgent" ->
+                behaviorAgent.getWeight();
+
+            default -> 0.2;
         };
     }
 
     /**
-     * Update transaction with fraud decision.
-     *
-     * @param txnId Transaction ID
-     * @param decision Fraud decision
+     * Update transaction details.
      */
-    private void updateTransaction(String txnId, FraudDecision decision) {
-        try {
-            transactionService.updateFraudDecisionWithDetails(
+    private void updateTransaction(
+            String txnId,
+            FraudDecision decision) {
+
+        transactionService
+                .updateFraudDecisionWithDetails(
+                        txnId,
+                        decision.getDecision(),
+                        decision.getFinalScore(),
+                        decision.getAgentResults(),
+                        decision.getAllReasons());
+
+        log.info(
+                "Updated transaction {} with fraud decision {}",
                 txnId,
-                decision.getDecision(),
-                decision.getFinalScore(),
-                decision.getAgentResults(),
-                decision.getAllReasons()
-            );
-            log.info("Updated transaction {} with fraud decision and agent results: {}", txnId, decision.getDecision());
-        } catch (Exception e) {
-            log.error("Failed to update transaction {} with fraud decision", txnId, e);
+                decision.getDecision());
+    }
+
+    /**
+     * Create fraud alert.
+     */
+    private void createFraudAlert(
+            FraudDecision decision) {
+
+        String decisionType = decision.getDecision();
+
+        BigDecimal score = decision.getFinalScore();
+
+        if ("BLOCK".equals(decisionType)
+                || "HOLD".equals(decisionType)
+                || ("OTP".equals(decisionType)
+                        && score.compareTo(
+                                BigDecimal.valueOf(50)) >= 0)) {
+
+            FraudAlert alert = notificationService
+                    .createAlert(decision);
+
+            log.info(
+                    "Fraud alert created: alertId={}, severity={}, decision={}, txnId={}",
+                    alert.getAlertId(),
+                    alert.getSeverity(),
+                    decisionType,
+                    decision.getTxnId());
         }
     }
 
     /**
-     * Create fraud alert for dashboard notifications.
-     *
-     * @param decision Fraud decision
+     * Graceful shutdown.
      */
-    private void createFraudAlert(FraudDecision decision) {
-        try {
-            // Create alerts for HOLD and BLOCK decisions (high-risk transactions)
-            // Also create alerts for OTP if score is high enough
-            String decisionType = decision.getDecision();
-            BigDecimal score = decision.getFinalScore();
-            
-            if ("BLOCK".equals(decisionType) || "HOLD".equals(decisionType) ||
-                ("OTP".equals(decisionType) && score.compareTo(BigDecimal.valueOf(50)) >= 0)) {
-                FraudAlert alert = notificationService.createAlert(decision);
-                log.info("Fraud alert created: alertId={}, severity={}, decision={}, txnId={}",
-                         alert.getAlertId(), alert.getSeverity(), decisionType, decision.getTxnId());
-            }
-        } catch (Exception e) {
-            log.error("Failed to create fraud alert for transaction: {}", decision.getTxnId(), e);
-            // Don't fail the fraud detection if alert creation fails
-        }
-    }
-
-    /**
-     * Shutdown executor service gracefully.
-     */
+    @PreDestroy
     public void shutdown() {
+
+        log.info(
+                "Shutting down fraud orchestrator executor service");
+
         executorService.shutdown();
     }
 }
-
-// Made with Bob

@@ -1,12 +1,16 @@
 package com.fraud.platform.entity.converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fraud.platform.model.nested.CustomerInfo;
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fraud.platform.model.nested.CustomerInfo;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * JPA converter for CustomerInfo to JSONB
@@ -15,10 +19,13 @@ import org.slf4j.LoggerFactory;
  */
 @Converter
 public class CustomerInfoConverter implements AttributeConverter<CustomerInfo, String> {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(CustomerInfoConverter.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
     @Override
     public String convertToDatabaseColumn(CustomerInfo attribute) {
         if (attribute == null) {
@@ -33,7 +40,7 @@ public class CustomerInfoConverter implements AttributeConverter<CustomerInfo, S
             throw new IllegalArgumentException("Error converting CustomerInfo to JSONB", e);
         }
     }
-    
+
     @Override
     public CustomerInfo convertToEntityAttribute(String dbData) {
         if (dbData == null || dbData.isEmpty()) {

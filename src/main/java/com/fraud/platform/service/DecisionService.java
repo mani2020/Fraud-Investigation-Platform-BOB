@@ -1,15 +1,18 @@
 package com.fraud.platform.service;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.FraudDecision;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.FraudDecision;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for making final fraud decisions based on aggregated agent scores.
@@ -31,6 +34,18 @@ public class DecisionService {
     @Value("${fraud.decision.block-threshold:85}")
     private int blockThreshold;
 
+    @Value("${fraud.critical-rules.block-blacklisted-merchant:true}")
+    private boolean blockBlacklistedMerchant;
+
+    @Value("${fraud.critical-rules.block-blacklisted-ip:true}")
+    private boolean blockBlacklistedIp;
+
+    @Value("${fraud.critical-rules.block-tor-browser:true}")
+    private boolean blockTorBrowser;
+
+    @Value("${fraud.critical-rules.block-vpn-proxy-combo:true}")
+    private boolean blockVpnProxyCombo;
+
     /**
      * Make final fraud decision based on agent scores.
      *
@@ -40,9 +55,55 @@ public class DecisionService {
     public String makeDecision(FraudDecision decision) {
         BigDecimal totalScore = decision.getFinalScore();
         int score = totalScore.intValue();
+        Map<String, Object> riskFactors = decision.getRiskFactors();
 
-        log.debug("Making decision for transaction {} with score: {}", 
+        log.debug("Making decision for transaction {} with score: {}",
                 decision.getTxnId(), score);
+
+        /*
+         * Critical fraud rule overrides
+         */
+        if (blockBlacklistedMerchant
+                && Boolean.TRUE.equals(
+                        riskFactors.get("blacklistedMerchant"))) {
+
+            log.warn(
+                    "Blocking transaction due to blacklisted merchant");
+
+            return "BLOCK";
+        }
+
+        if (blockBlacklistedIp
+                && Boolean.TRUE.equals(
+                        riskFactors.get("blacklistedIp"))) {
+
+            log.warn(
+                    "Blocking transaction due to blacklisted IP");
+
+            return "BLOCK";
+        }
+
+        if (blockVpnProxyCombo
+                && Boolean.TRUE.equals(
+                        riskFactors.get("vpnDetected"))
+                && Boolean.TRUE.equals(
+                        riskFactors.get("proxyDetected"))) {
+
+            log.warn(
+                    "Blocking transaction due to VPN + Proxy combination");
+
+            return "BLOCK";
+        }
+
+        if (blockTorBrowser
+                && Boolean.TRUE.equals(
+                        riskFactors.get("torDetected"))) {
+
+            log.warn(
+                    "Blocking transaction due to TOR browser");
+
+            return "BLOCK";
+        }
 
         String finalDecision;
         if (score >= blockThreshold) {
@@ -57,7 +118,7 @@ public class DecisionService {
             finalDecision = "APPROVE";
         }
 
-        log.info("Decision for {}: {} (Score: {})", 
+        log.info("Decision for {}: {} (Score: {})",
                 decision.getTxnId(), finalDecision, score);
 
         return finalDecision;
@@ -71,7 +132,7 @@ public class DecisionService {
      */
     public String generateDecisionMatrix(FraudDecision decision) {
         StringBuilder matrix = new StringBuilder();
-        
+
         matrix.append("╔════════════════════════════════════════╗\n");
         matrix.append("║     FRAUD DECISION MATRIX              ║\n");
         matrix.append("╠════════════════════════════════════════╣\n");
@@ -85,38 +146,38 @@ public class DecisionService {
             String agentName = formatAgentName(result.getAgentName());
             int score = result.getRiskScore().intValue();
             String bar = generateScoreBar(score);
-            
-            matrix.append(String.format("║ %-20s %3d %s ║\n", 
+
+            matrix.append(String.format("║ %-20s %3d %s ║\n",
                     agentName, score, bar));
         }
 
         matrix.append("╠════════════════════════════════════════╣\n");
-        
+
         // Total score
         int totalScore = decision.getFinalScore().intValue();
         String totalBar = generateScoreBar(totalScore);
-        matrix.append(String.format("║ %-20s %3d %s ║\n", 
+        matrix.append(String.format("║ %-20s %3d %s ║\n",
                 "TOTAL SCORE", totalScore, totalBar));
-        
+
         matrix.append("╠════════════════════════════════════════╣\n");
-        
+
         // Decision thresholds
         matrix.append("║ Decision Thresholds:                   ║\n");
         matrix.append(String.format("║   APPROVE:  < %-3d                       ║\n", approveThreshold));
-        matrix.append(String.format("║   OTP:      %-3d - %-3d                   ║\n", 
+        matrix.append(String.format("║   OTP:      %-3d - %-3d                   ║\n",
                 approveThreshold, otpThreshold - 1));
-        matrix.append(String.format("║   HOLD:     %-3d - %-3d                   ║\n", 
+        matrix.append(String.format("║   HOLD:     %-3d - %-3d                   ║\n",
                 otpThreshold, holdThreshold - 1));
         matrix.append(String.format("║   BLOCK:    ≥ %-3d                       ║\n", blockThreshold));
-        
+
         matrix.append("╠════════════════════════════════════════╣\n");
-        
+
         // Final decision
         String finalDecision = decision.getDecision();
         String decisionEmoji = getDecisionEmoji(finalDecision);
-        matrix.append(String.format("║ FINAL DECISION: %s %-18s ║\n", 
+        matrix.append(String.format("║ FINAL DECISION: %s %-18s ║\n",
                 decisionEmoji, finalDecision));
-        
+
         matrix.append("╚════════════════════════════════════════╝\n");
 
         return matrix.toString();
@@ -127,7 +188,7 @@ public class DecisionService {
      */
     public String generateSimpleTable(FraudDecision decision) {
         StringBuilder table = new StringBuilder();
-        
+
         table.append("\n");
         table.append("┌──────────────────────┬───────┐\n");
         table.append("│ Agent                │ Score │\n");
@@ -154,11 +215,11 @@ public class DecisionService {
      */
     public String generateMarkdownTable(FraudDecision decision) {
         StringBuilder md = new StringBuilder();
-        
+
         md.append("## Fraud Decision Matrix\n\n");
         md.append(String.format("**Transaction ID:** %s  \n", decision.getTxnId()));
         md.append(String.format("**Timestamp:** %s  \n\n", decision.getTimestamp()));
-        
+
         md.append("| Agent | Score | Weight | Weighted Score |\n");
         md.append("|-------|-------|--------|----------------|\n");
 
@@ -170,17 +231,17 @@ public class DecisionService {
             BigDecimal score = result.getRiskScore();
             double weight = getAgentWeight(result.getAgentName());
             BigDecimal weightedScore = score.multiply(BigDecimal.valueOf(weight));
-            
+
             totalWeightedScore = totalWeightedScore.add(weightedScore);
             totalWeight = totalWeight.add(BigDecimal.valueOf(weight));
 
-            md.append(String.format("| %s | %.0f | %.0f%% | %.2f |\n", 
+            md.append(String.format("| %s | %.0f | %.0f%% | %.2f |\n",
                     agentName, score, weight * 100, weightedScore));
         }
 
         md.append("|-------|-------|--------|----------------|\n");
         BigDecimal finalScore = totalWeightedScore.divide(totalWeight, 2, RoundingMode.HALF_UP);
-        md.append(String.format("| **TOTAL** | **%.0f** | **100%%** | **%.2f** |\n\n", 
+        md.append(String.format("| **TOTAL** | **%.0f** | **100%%** | **%.2f** |\n\n",
                 finalScore, finalScore));
 
         md.append("### Decision Thresholds\n\n");
@@ -189,7 +250,7 @@ public class DecisionService {
         md.append(String.format("- **HOLD:** %d - %d\n", otpThreshold, holdThreshold - 1));
         md.append(String.format("- **BLOCK:** ≥ %d\n\n", blockThreshold));
 
-        md.append(String.format("### Final Decision: **%s** %s\n\n", 
+        md.append(String.format("### Final Decision: **%s** %s\n\n",
                 decision.getDecision(), getDecisionEmoji(decision.getDecision())));
 
         return md.toString();
@@ -203,7 +264,8 @@ public class DecisionService {
             case "APPROVE" -> "Transaction approved - Low fraud risk detected. Process normally.";
             case "OTP" -> "OTP verification required - Medium fraud risk detected. Additional authentication needed.";
             case "HOLD" -> "Transaction on hold - High fraud risk detected. Manual review required before processing.";
-            case "BLOCK" -> "Transaction blocked - Critical fraud risk detected. Do not process. Contact customer immediately.";
+            case "BLOCK" ->
+                "Transaction blocked - Critical fraud risk detected. Do not process. Contact customer immediately.";
             default -> "Unknown decision";
         };
     }
@@ -213,7 +275,7 @@ public class DecisionService {
      */
     public List<String> getDecisionActions(String decision) {
         List<String> actions = new ArrayList<>();
-        
+
         switch (decision) {
             case "APPROVE" -> {
                 actions.add("Process transaction normally");
@@ -242,7 +304,7 @@ public class DecisionService {
                 actions.add("Document all findings for compliance");
             }
         }
-        
+
         return actions;
     }
 
@@ -259,7 +321,7 @@ public class DecisionService {
     private String generateScoreBar(int score) {
         int bars = score / 10;
         StringBuilder bar = new StringBuilder();
-        
+
         for (int i = 0; i < 10; i++) {
             if (i < bars) {
                 if (score >= 85) {
@@ -275,7 +337,7 @@ public class DecisionService {
                 bar.append("·");
             }
         }
-        
+
         return bar.toString();
     }
 

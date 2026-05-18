@@ -1,3 +1,10 @@
+ica:
+  context-studio:
+    base-url: https://servicesessentials.ibm.com
+    context-id: ${ICA_CONTEXT_ID}
+    api-key: ${ICA_CONTEXT_API_KEY}
+    mcp-gateway-token: ${MCP_GATEWAY_TOKEN}
+    
 spring:
   datasource:
     url: jdbc:h2:mem:frauddb

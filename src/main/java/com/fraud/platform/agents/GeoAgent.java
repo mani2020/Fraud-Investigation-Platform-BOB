@@ -1,17 +1,20 @@
 package com.fraud.platform.agents;
 
-import com.fraud.platform.model.AgentResult;
-import com.fraud.platform.model.CanonicalFraudEvent;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+import com.fraud.platform.model.AgentResult;
+import com.fraud.platform.model.CanonicalFraudEvent;
+
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Geo-location fraud detection agent.
- * Analyzes transaction country, location patterns, VPN detection, and location mismatches.
+ * Analyzes transaction country, location patterns, VPN detection, and location
+ * mismatches.
  * Leverages nested location data and fraud signals for enhanced detection.
  */
 @Component
@@ -24,18 +27,15 @@ public class GeoAgent implements FraudAgent {
             "CANADA", "AUSTRALIA", "GERMANY", "FRANCE", "JAPAN",
             "SINGAPORE", "SWITZERLAND", "NETHERLANDS", "SWEDEN",
             "NORWAY", "DENMARK", "FINLAND", "NEW ZEALAND", "AUSTRIA",
-            "BELGIUM", "IRELAND", "LUXEMBOURG", "SPAIN", "ITALY"
-    );
+            "BELGIUM", "IRELAND", "LUXEMBOURG", "SPAIN", "ITALY");
 
     private static final List<String> HIGH_RISK_COUNTRIES = List.of(
             "RUSSIA", "NIGERIA", "CHINA", "NORTH KOREA", "IRAN",
-            "SYRIA", "VENEZUELA", "BELARUS", "MYANMAR"
-    );
+            "SYRIA", "VENEZUELA", "BELARUS", "MYANMAR");
 
     private static final List<String> MEDIUM_RISK_COUNTRIES = List.of(
             "UKRAINE", "PAKISTAN", "BANGLADESH", "INDONESIA",
-            "PHILIPPINES", "VIETNAM", "EGYPT"
-    );
+            "PHILIPPINES", "VIETNAM", "EGYPT");
 
     @Override
     public AgentResult analyze(CanonicalFraudEvent event) {
@@ -47,7 +47,7 @@ public class GeoAgent implements FraudAgent {
 
         // Use helper method for safe access to country
         String country = event.getCountry();
-        
+
         if (country != null) {
             final String countryUpper = country.toUpperCase();
 
@@ -76,7 +76,7 @@ public class GeoAgent implements FraudAgent {
         if (event.getLocation() != null) {
             String city = event.getLocation().getCity();
             String region = event.getLocation().getRegion();
-            
+
             if (city != null) {
                 log.debug("Transaction from city: {}", city);
             }
@@ -91,7 +91,7 @@ public class GeoAgent implements FraudAgent {
                 riskScore = riskScore.add(BigDecimal.valueOf(30));
                 reasons.add("VPN detected");
             }
-            
+
             if (Boolean.TRUE.equals(event.getFraudSignals().getLocationMismatch())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(35));
                 reasons.add("Location mismatch detected");
@@ -104,12 +104,12 @@ public class GeoAgent implements FraudAgent {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
                 reasons.add("VPN detected from device data");
             }
-            
+
             if (Boolean.TRUE.equals(event.getDevice().getProxyDetected())) {
                 riskScore = riskScore.add(BigDecimal.valueOf(25));
                 reasons.add("Proxy detected");
             }
-            
+
             // Check IP address for additional risk scoring
             String ipAddress = event.getDevice().getIpAddress();
             if (ipAddress != null) {
@@ -120,7 +120,22 @@ public class GeoAgent implements FraudAgent {
                 }
             }
         }
+        /*
+         * VPN + RU combination
+         */
+        if (event.getLocation() != null
+                && "RU".equalsIgnoreCase(
+                        event.getLocation().getCountry())
+                && event.getFraudSignals() != null
+                && Boolean.TRUE.equals(
+                        event.getFraudSignals().getVpnDetected())) {
 
+            riskScore = riskScore.add(BigDecimal.valueOf(40));
+
+            reasons.add("VPN usage from high-risk country");
+            reasons.add("Critical geo-risk combination detected");
+
+        }
         // Cap risk score at 100
         if (riskScore.compareTo(BigDecimal.valueOf(100)) > 0) {
             riskScore = BigDecimal.valueOf(100);

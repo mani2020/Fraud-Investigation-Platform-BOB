@@ -1,5 +1,8 @@
 package com.fraud.platform.model.nested;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +14,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeviceInfo {
@@ -34,6 +38,7 @@ public class DeviceInfo {
     /**
      * Indicates whether the device is trusted.
      */
+    @JsonProperty("isTrustedDevice")
     private Boolean isTrusted;
 
     /**
@@ -54,6 +59,7 @@ public class DeviceInfo {
     /**
      * Raw user agent string for the device.
      */
+    @JsonProperty("browser")
     private String userAgent;
 }
 

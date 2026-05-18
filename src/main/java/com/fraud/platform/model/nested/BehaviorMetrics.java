@@ -1,60 +1,49 @@
 package com.fraud.platform.model.nested;
 
+import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 /**
  * Nested behavioral metrics used for internal fraud analysis payloads.
  */
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class BehaviorMetrics {
 
-    /**
-     * Number of transactions observed in the last 24 hours.
-     */
+    @JsonProperty("transactionCount24h")
     private Integer transactionCount24h;
 
-    /**
-     * Total transaction amount observed in the last 24 hours.
-     */
+    @JsonProperty("totalAmount24h")
     private BigDecimal totalAmount24h;
 
-    /**
-     * Calculated velocity score for recent transaction activity.
-     */
+    @JsonProperty("velocityScore")
     private BigDecimal velocityScore;
 
-    /**
-     * Indicates whether the transaction occurred at an unusual time.
-     */
+    @JsonProperty("unusualTime")
     private Boolean unusualTime;
 
-    /**
-     * Indicates whether the amount is unusual for the customer.
-     */
+    @JsonProperty("unusualAmount")
     private Boolean unusualAmount;
 
-    /**
-     * Indicates whether the location is unusual for the customer.
-     */
+    @JsonProperty("unusualLocation")
     private Boolean unusualLocation;
 
-    /**
-     * Average customer transaction amount.
-     */
+    @JsonProperty("avgTransactionAmount")
     private BigDecimal avgTransactionAmount;
 
-    /**
-     * Maximum customer transaction amount observed.
-     */
+    @JsonProperty("maxTransactionAmount")
     private BigDecimal maxTransactionAmount;
+
 }
 
 // Made with Bob
